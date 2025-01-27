@@ -10,7 +10,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 interface IHodler {
-    function version() external pure returns (string memory);
+    function version() external pure returns (uint8);
 }
 
 /// @title Hodler - ANyONe Protocol
@@ -26,7 +26,7 @@ contract Hodler is
 {
     using SafeMath for uint256;
     
-    string public constant VERSION = "0.1.0";
+    uint8 public constant VERSION = 1;
 
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
@@ -268,7 +268,7 @@ contract Hodler is
         uint256 _stakeDuration,
         uint256 _governanceDuration
     ) initializer public {        
-        require(_lockSize > 0, "Lock amount must be greater than 0");
+        require(_lockSize > 0, "Lock size must be greater than 0");
         require(isValidDuration(_lockDuration), "Invalid duration for locking");
         require(isValidDuration(_stakeDuration), "Invalid duration for staking");
         require(isValidDuration(_governanceDuration), "Invalid duration for governance");
@@ -313,34 +313,14 @@ contract Hodler is
         );
     }
 
-    function _compareVersions(string memory version1, string memory version2) internal pure returns (int) {
-        uint8[3] memory v1 = _parseVersion(version1);
-        uint8[3] memory v2 = _parseVersion(version2);
-        for (uint8 i = 0; i < 3; i++) {
-            if (v1[i] > v2[i]) return 1;
-            if (v1[i] < v2[i]) return -1;
-        }
+    function _compareVersions(uint8 version1, uint8 version2) internal pure returns (int) {
+        if (version1 > version2) return 1;
+        if (version1 < version2) return -1;
+
         return 0;
     }
 
-    function _parseVersion(string memory _version) internal pure returns (uint8[3] memory) {
-        uint8[3] memory parts;
-        bytes memory versionBytes = bytes(_version);
-        uint8 partIndex = 0;
-        uint8 partValue = 0;
-        for (uint8 i = 0; i < versionBytes.length; i++) {
-            if (versionBytes[i] == ".") {
-                parts[partIndex++] = partValue;
-                partValue = 0;
-            } else {
-                partValue = partValue * 10 + (uint8(versionBytes[i]) - 48);
-            }
-        }
-        parts[partIndex] = partValue;
-        return parts;
-    }
-
-    function version() external pure returns (string memory) {
+    function version() external pure returns (uint8) {
         return VERSION;
     }
 
