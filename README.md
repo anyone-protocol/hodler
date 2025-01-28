@@ -1,40 +1,77 @@
-# Staker contract
-`Staker` contract contains tokens vaulted towards a specific protocol pre-defined purpose:
-* Locking tokens by operators of virtual relays (with a 30 day withdrawal delay);
-* Locking tokens on behalf of operators of virtual relays (with a 30 day withdrawal delay);
+# Hodler Contract - ANyONe Protocol
+
+A smart contract implementing token rewards, locking, staking, and governance mechanisms using the UUPS upgradeable pattern with role-based access control.
+Contains tokens vaulted towards a specific protocol pre-defined purpose:
+
+* Locking tokens on behalf of virtual relays (with a 30 day withdrawal delay);
 * Staking tokens by hodlers to increase the scoring of relay operators (with a 7 day withdrawal delay);
 * Staking tokens by hodlers to acquire governance voting capabilities (with a 30 day withdrawal delay);
 
 The contract acts as a public registry assigned to specific addreses, and therefore doesn't emit ERC20 tokens.
 
-## Functions for locking:
-* `lock(address _address, string calldata fingerprint)` - will transfer `currentLockSize` atomic units of tokens to the vault, and lock it for the specified fingerprint. These tokens will be locked for `lockBlocks` amount of blocks. In case where the user has already vaulted tokens that are available, those will be used first.
+## Overview
 
-* `unlock(address _address, uint256 _upto, string calldata fingerprint)` - will cancel the `_upto` amount of tokens locked with a specified fingerprint by a given address (given the `lockBlocks` amount have passed since locking those tokens). Cancelling the lock will make the tokens available for immediate withdrawal, locking, staking or delegating to vote.
+The Hodler contract is a core component of the ANyONe Protocol that manages token interactions including:
+- Token locking with relay fingerprints
+- Staking with operators
+- Governance voting
+- Rewards distribution
+- Time-locked vaults
 
-## Functions for staking:
-* `stake(address _address, uint256 _amount)` - will transfer `_amount` atomic units of tokens to the vault, and stake it as the sender towards the specified operator address.
+## Features
 
-* `unstake(address _address, uint256 _amount)` - will immediately cancel the sender's stake assigned to the given address and make the tokens available for immediate staking (changing to another operator address), but the withdrawal, locking, or delegating tokens to vote will be delayed by `stakeBlocks`.
+- **Upgradeable**: Uses OpenZeppelin's UUPS pattern
+- **Access Control**: Role-based permissions for administrative functions
+- **Security**: Implements reentrancy protection and pausable functionality
+- **Time-Locked Operations**: Configurable durations for locks, stakes, and governance
+- **Gas Management**: Built-in gas accounting for reward distributions
 
-* `restake(bool _enabled)` - will toggle automatic restaking of rewards for the sender address. This moves the allocated rewards from being claimable to be staked (in the protocol layer) and automatically included in calculation of stake rewards.
+## Roles
 
-## Functions for governance:
-* `endorse(address _address, uint256 _amount)` - will transfer `_amount` atomic units of tokens to the vault and lock them for governance purposes.
+- `DEFAULT_ADMIN_ROLE`: Full administrative access
+- `PAUSER_ROLE`: Can pause/unpause contract
+- `UPGRADER_ROLE`: Can upgrade contract implementation
+- `CONTROLLER_ROLE`: Can manage rewards and protocol parameters
 
-* `repudiate(address _address, uint256 _amount)` - will immediately cancel `_amount` of locked tokens with the purpose of governance but they will be made available after a delay of `governanceBlocks`
+## Key Functions
 
-## Interface for interactions with the staker contract's vault:
-* `receive()` - sending coin to the contract, will make the controller process use it as gas to update the amount of allocated tokens in the rewards distribution (both for staking and claimable).
-Freshly allocated reward tokens increase the amount of vaulted tokens for a given user and unless automatically restaked are available for immediate withdrawal, staking, or delegating to vote.
+### Token Operations
+- `lock(string fingerprint)`: Lock tokens with a relay fingerprint
+- `unlock(string fingerprint)`: Unlock tokens to a time-locked vault
+- `stake(address operator, uint256 amount)`: Stake tokens with an operator
+- `unstake(address operator)`: Unstake tokens to a time-locked vault
+- `addVotes(uint256 amount)`: Lock tokens for governance
+- `removeVotes(uint256 amount)`: Remove tokens from governance into a time-locked vault
 
-* `requestUpdate()` - using the sender's address will check the available gas and make the controller process use part of the gas budget to update the amount of allocated and restaked tokens in this contract.
+### Vault Management
+- `openExpired()`: Claim tokens from expired vaults
+- `withdraw(uint256 amount)`: Withdraw available tokens
 
-* `withdraw(uint256 _amount)` - if available, will withdraw specified amount of tokens from the contract's vault.
+### Administrative Functions
+- `setLockSize(uint256 size)`
+- `setLockDuration(uint256 seconds)`
+- `setStakeDuration(uint256 seconds)`
+- `setGovernanceDuration(uint256 seconds)`
+- `emergencyWithdraw()`: Admin-only emergency withdrawal
 
-## Contract controller interface - authorized for OPERATOR_ROLE only
-* `update(address _address, uint256 _allocated, uint256 _restaked)` - will update the amount of tokens allocated (from rewards) to the pool of immediately available or if restaking is enabled, will move those tokens to the selected stake (governance / operator stake).
+## Security Features
 
+- Reentrancy protection
+- Pausable functionality
+- Role-based access control
+- Time buffer protection against miner manipulation
+- Version control for upgrades
+- Emergency withdrawal mechanism
+
+## Events
+
+- `Locked/Unlocked`: Token locking operations
+- `Staked/Unstaked`: Staking operations
+- `AddedVotes/RemovedVotes`: Governance operations
+- `Vaulted`: Time-locked vault creation
+- `UpdateRewards/Rewarded`: Reward distribution
+- `Withdrawn`: Token withdrawals
+- Various parameter update events
 ## Development
 
 Built on top of the [OpenZeppelin framework](https://openzeppelin.com/), developed using [HardHat env](https://hardhat.org/).

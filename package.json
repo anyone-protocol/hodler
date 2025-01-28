@@ -1,7 +1,7 @@
 {
-  "name": "staker",
+  "name": "hodler",
   "version": "0.1.0",
-  "description": "EVM based interface for ANyONe Protocol",
+  "description": "EVM based interface for Hodlers of ANyONe Protocol",
   "main": "index.js",
   "scripts": {
     "test": "hardhat test"

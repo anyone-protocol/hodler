@@ -22,7 +22,7 @@ async function main() {
 
   console.log(`Deploying hodler with ANyONe token: ${anyoneAddress}`)
 
-  const deployerPrivateKey = process.env.STAKER_DEPLOYER_KEY || '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d' // HH #1
+  const deployerPrivateKey = process.env.HODLER_DEPLOYER_KEY || '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d' // HH #1
   const [ owner ] = await ethers.getSigners()
 
   const deployer = deployerPrivateKey
@@ -32,7 +32,7 @@ async function main() {
       )
     : owner
   
-  const operatorAddress = process.env.STAKER_OPERATOR_ADDRESS || '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC' // Hardhat #2 
+  const operatorAddress = process.env.HODLER_OPERATOR_ADDRESS || '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC' // Hardhat #2 
 
   console.log(`Deploying Hodler with operator ${operatorAddress}...`)
   
@@ -49,7 +49,7 @@ async function main() {
   console.log(`Proxy deployed to ${proxyContractAddress}`)
 
   if (process.env.PHASE !== undefined && consul !== undefined) {
-    const consulKey = process.env.STAKER_CONSUL_KEY || 'hodler-sepolia/test-deploy'
+    const consulKey = process.env.HODLER_CONSUL_KEY || 'hodler-sepolia/test-deploy'
 
     const updateResult = await consul.kv.set({
       key: consulKey,
