@@ -46,7 +46,9 @@ contract Hodler is
     uint256 private constant WEEK = 7 * DAY;
     uint256 private constant MONTH = 30 * DAY;
     
-    // Minimum buffer to prevent miner manipulation
+    // Minimum buffer to prevent miner manipulation by ensuring that the timestamp
+    // used in the contract is not too close to the current block time, which could
+    // be influenced by miners to gain an advantage.
     uint256 private constant TIMESTAMP_BUFFER = 15 * MINUTE;
 
     struct Vault {
@@ -331,10 +333,10 @@ contract Hodler is
     function emergencyWithdraw() external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
         require(paused(), "Contract must be paused");
         uint256 balance = tokenContract.balanceOf(address(this));
-        require(tokenContract.transfer(msg.sender, balance), "Transfer failed");
+        require(tokenContract.transfer(_msgSender(), balance), "Transfer failed");
         
         uint256 ethBalance = address(this).balance;
-        (bool success, ) = msg.sender.call{value: ethBalance}("");
+        (bool success, ) = _msgSender().call{value: ethBalance}("");
         require(success, "ETH transfer failed");
     }
 }
