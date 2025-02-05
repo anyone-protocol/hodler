@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 
 interface IHodler {
     function version() external pure returns (uint8);
@@ -25,6 +26,7 @@ contract Hodler is
     ReentrancyGuardUpgradeable
 {
     using SafeMath for uint256;
+    using EnumerableMap for EnumerableMap.AddressToUintMap;
     
     uint8 public constant VERSION = 1;
 
@@ -34,6 +36,7 @@ contract Hodler is
 
     IERC20 public tokenContract;
     address payable public controllerAddress;
+    address public rewardsPoolAddress;
 
     uint256 public LOCK_SIZE;
     uint256 public LOCK_DURATION; 
@@ -59,6 +62,7 @@ contract Hodler is
     struct HodlerData {
         uint256 available;
         Vault[] vaults;
+        
         mapping(string => uint256) locks; // relay fingerprint => amount
         mapping(address => uint256) stakes; // operator address => amount
         uint256 votes;
@@ -130,6 +134,7 @@ contract Hodler is
     }
 
     function stake(address _address, uint256 _amount) external whenNotPaused nonReentrant {
+        require(_amount > 0, "Insuficient amount for staking");
         if (hodlers[_msgSender()].available >= _amount) {
             hodlers[_msgSender()].available = hodlers[_msgSender()].available.sub(_amount);
         } else {
@@ -204,6 +209,7 @@ contract Hodler is
     }
 
     function withdraw(uint256 _amount) external whenNotPaused nonReentrant {
+        require(_amount > 0, "Non-zero amount required");
         require(
             hodlers[_msgSender()].available >= _amount,
             "Insufficient available balance"
@@ -214,19 +220,36 @@ contract Hodler is
         emit Withdrawn(_msgSender(), _amount);
     }
 
-    function isValidDuration(uint256 duration) internal pure returns (bool) {
-        return duration >= (TIMESTAMP_BUFFER + DAY);
+    function isValidDuration(uint256 _duration) internal pure returns (bool) {
+        return _duration >= (TIMESTAMP_BUFFER + DAY);
     }
     
     function reward(
         address _address,
         uint256 _rewardAmount,
         uint256 _gasEstimate
-    ) external onlyRole(CONTROLLER_ROLE) nonReentrant {
+    ) external onlyRole(CONTROLLER_ROLE) whenNotPaused nonReentrant {
         require(hodlers[_address].gas >= _gasEstimate, "Insufficient gas budget for hodler account");
         hodlers[_address].gas = hodlers[_address].gas.sub(_gasEstimate);
+        require(tokenContract.transferFrom(rewardsPoolAddress, address(this), _rewardAmount), "Transfer of reward tokens failed");
         hodlers[_address].available = hodlers[_address].available.add(_rewardAmount);
         emit Rewarded(_address, _rewardAmount);
+    }
+
+    function getLock(string calldata _fingerprint) external view returns (uint256) {
+        uint256 fingerprintLength = bytes(_fingerprint).length;
+        require(fingerprintLength > 0, "Fingerprint must have non 0 characters");
+        require(fingerprintLength <= 40, "Fingerprint must have 40 or less characters");
+
+        return hodlers[_msgSender()].locks[_fingerprint];
+    }
+
+    function getStake(address _address) external view returns (uint256) {
+        return hodlers[_msgSender()].stakes[_address];
+    }
+
+    function getVaults() external view returns (Vault[] memory) {
+        return hodlers[_msgSender()].vaults;
     }
 
     function setLockSize(uint256 _size) external onlyRole(CONTROLLER_ROLE) nonReentrant {
@@ -268,7 +291,8 @@ contract Hodler is
         uint256 _lockSize,
         uint256 _lockDuration,
         uint256 _stakeDuration,
-        uint256 _governanceDuration
+        uint256 _governanceDuration,
+        address _rewardsPoolAddress
     ) initializer public {        
         require(_lockSize > 0, "Lock size must be greater than 0");
         require(isValidDuration(_lockDuration), "Invalid duration for locking");
@@ -287,6 +311,8 @@ contract Hodler is
         LOCK_DURATION = _lockDuration;
         STAKE_DURATION = _stakeDuration;
         GOVERNANCE_DURATION = _governanceDuration;
+        
+        rewardsPoolAddress = _rewardsPoolAddress;
 
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _grantRole(PAUSER_ROLE, _msgSender());
@@ -334,9 +360,5 @@ contract Hodler is
         require(paused(), "Contract must be paused");
         uint256 balance = tokenContract.balanceOf(address(this));
         require(tokenContract.transfer(_msgSender(), balance), "Transfer failed");
-        
-        uint256 ethBalance = address(this).balance;
-        (bool success, ) = _msgSender().call{value: ethBalance}("");
-        require(success, "ETH transfer failed");
     }
 }

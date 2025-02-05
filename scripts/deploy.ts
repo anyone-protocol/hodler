@@ -39,10 +39,16 @@ async function main() {
   console.log(`Deploying Hodler with deployer ${deployer.address}...`)
   
   const Contract = await ethers.getContractFactory('Hodler', deployer)
+
+  const lockSize = 100
+  const lockDuration = 60 * 60 * 24 * 30 // 30 days
+  const stakeDuration = 60 * 60 * 24 * 7 // 7 days
+  const governanceDuration = 60 * 60 * 24 * 30 // 30 days
   
   const instance = await upgrades.deployProxy(
     Contract,
-    [ anyoneAddress, operatorAddress ]
+    [ anyoneAddress, operatorAddress, 
+      lockSize, lockDuration, stakeDuration, governanceDuration ]
   )
   await instance.waitForDeployment()
   const proxyContractAddress = await instance.getAddress()

@@ -35,6 +35,10 @@ The Hodler contract is a core component of the ANyONe Protocol that manages toke
 
 ## Key Functions
 
+### Data access functions
+- `getLock(string fingerprint)`: Return the amount locked by the sender for a given fingerprint
+- `getVaults()`: Return the list of vaulted tokens (and availability timestamp) for the sender
+
 ### Token Operations
 - `lock(string fingerprint)`: Lock tokens with a relay fingerprint
 - `unlock(string fingerprint)`: Unlock tokens to a time-locked vault
@@ -72,6 +76,7 @@ The Hodler contract is a core component of the ANyONe Protocol that manages toke
 - `UpdateRewards/Rewarded`: Reward distribution
 - `Withdrawn`: Token withdrawals
 - Various parameter update events
+
 ## Development
 
 Built on top of the [OpenZeppelin framework](https://openzeppelin.com/), developed using [HardHat env](https://hardhat.org/).
