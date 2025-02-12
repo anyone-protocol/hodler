@@ -116,7 +116,7 @@ describe("Hodler Access Control Tests", function () {
       
       // check is to see if controller can call function, not if it executes correctly
       // @ts-ignore
-      await expect(hodler.connect(controller).reward(unauthorized.address, rewardAmount, gasEstimate))
+      await expect(hodler.connect(controller).reward(unauthorized.address, rewardAmount, gasEstimate, false))
         .to.be.revertedWith("Insufficient gas budget for hodler account");
     });
 

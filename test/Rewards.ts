@@ -102,7 +102,8 @@ describe("Hodler Rewards and Gas Management", function () {
       const tx = await hodler.connect(controller).reward(
         user.address,
         reward,
-        gasEstimate
+        gasEstimate,
+        false
       );
       
       const userData = await hodler.hodlers(user.address);
@@ -127,10 +128,11 @@ describe("Hodler Rewards and Gas Management", function () {
       await expect(hodler.connect(controller).reward(
         user.address,
         rewardAmount,
-        10000
+        10000,
+        false
       ))
         .to.emit(hodler, "Rewarded")
-        .withArgs(user.address, rewardAmount);
+        .withArgs(user.address, rewardAmount, false);
 
       const userData = await hodler.hodlers(user.address);
       expect(userData.available).to.equal(rewardAmount);
@@ -149,7 +151,8 @@ describe("Hodler Rewards and Gas Management", function () {
         hodler.connect(controller).reward(
           user.address,
           ethers.parseEther("10"),
-          ethers.parseEther("1.0")
+          ethers.parseEther("1.0"),
+          false
         )
       ).to.be.revertedWith("Insufficient gas budget for hodler account");
     });

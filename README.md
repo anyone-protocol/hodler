@@ -51,12 +51,17 @@ The Hodler contract is a core component of the ANyONe Protocol that manages toke
 - `openExpired()`: Claim tokens from expired vaults
 - `withdraw(uint256 amount)`: Withdraw available tokens
 
-### Administrative Functions
+### Administrative functions
+- `pause()`
+- `unpause()`
+- `emergencyWithdraw()`: Admin-only emergency withdrawal, requires paused
+
+### Controller functions
 - `setLockSize(uint256 size)`
 - `setLockDuration(uint256 seconds)`
 - `setStakeDuration(uint256 seconds)`
 - `setGovernanceDuration(uint256 seconds)`
-- `emergencyWithdraw()`: Admin-only emergency withdrawal
+- `reward(address _address, uint256 _rewardAmount, uint256 _gasEstimate)`
 
 ## Security Features
 

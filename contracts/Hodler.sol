@@ -82,8 +82,8 @@ contract Hodler is
     
     event Vaulted(address indexed hodler, uint256 amount, uint256 availableAt);
     
-    event UpdateRewards(address indexed hodler, uint256 gasEstimate);
-    event Rewarded(address indexed hodler, uint256 amount);
+    event UpdateRewards(address indexed hodler, uint256 gasEstimate, bool redeem);
+    event Rewarded(address indexed hodler, uint256 amount, bool redeemed);
 
     event Withdrawn(address indexed hodler, uint256 amount);
     
@@ -193,7 +193,21 @@ contract Hodler is
             hodlers[_msgSender()].gas > gasEstimate,
             "Not enough gas budget for updating the hodler account"
         );
-        emit UpdateRewards(_msgSender(), gasEstimate);
+        emit UpdateRewards(_msgSender(), gasEstimate, false);
+    }
+
+    function redeem() external whenNotPaused nonReentrant {
+        uint256 gasTest = gasleft();
+        hodlers[_msgSender()].gas = hodlers[_msgSender()].gas.sub(0);
+        hodlers[_msgSender()].available = hodlers[_msgSender()].available.add(0);
+        require(hodlers[_msgSender()].gas >= 0, "Insufficient gas budget for hodler account");
+        uint256 gasEstimate = gasTest - gasleft();
+
+        require(
+            hodlers[_msgSender()].gas > gasEstimate,
+            "Not enough gas budget for updating the hodler account"
+        );
+        emit UpdateRewards(_msgSender(), gasEstimate, true);
     }
 
     function openExpired() external whenNotPaused nonReentrant {
@@ -227,13 +241,18 @@ contract Hodler is
     function reward(
         address _address,
         uint256 _rewardAmount,
-        uint256 _gasEstimate
+        uint256 _gasEstimate,
+        bool _redeem
     ) external onlyRole(CONTROLLER_ROLE) whenNotPaused nonReentrant {
         require(hodlers[_address].gas >= _gasEstimate, "Insufficient gas budget for hodler account");
         hodlers[_address].gas = hodlers[_address].gas.sub(_gasEstimate);
-        require(tokenContract.transferFrom(rewardsPoolAddress, address(this), _rewardAmount), "Transfer of reward tokens failed");
-        hodlers[_address].available = hodlers[_address].available.add(_rewardAmount);
-        emit Rewarded(_address, _rewardAmount);
+        if (_redeem) {
+            require(tokenContract.transferFrom(rewardsPoolAddress, _address, _rewardAmount), "Withdrawal of reward tokens failed");
+        } else {
+            require(tokenContract.transferFrom(rewardsPoolAddress, address(this), _rewardAmount), "Transfer of reward tokens failed");
+            hodlers[_address].available = hodlers[_address].available.add(_rewardAmount);
+        }
+        emit Rewarded(_address, _rewardAmount, _redeem);
     }
 
     function getLock(string calldata _fingerprint) external view returns (uint256) {

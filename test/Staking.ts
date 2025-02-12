@@ -68,7 +68,7 @@ describe("Hodler Stake/Unstake Tests", function () {
 
       // @ts-ignore
       const tx = await hodler.connect(controller).reward(
-        user.address, LOCK_SIZE, ethers.parseEther("0.001")
+        user.address, LOCK_SIZE, ethers.parseEther("0.001"), false
       );
 
       const data = await hodler.hodlers(user.address)
