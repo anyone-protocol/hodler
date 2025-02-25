@@ -109,7 +109,7 @@ describe("Hodler Stake/Unstake Tests", function () {
       const oldStake = await hodler.connect(user).getStake(operator.address);
       expect(oldStake).to.equal(STAKE_AMOUNT);
       // @ts-ignore
-      await hodler.connect(user).unstake(operator.address);
+      await hodler.connect(user).unstake(operator.address, STAKE_AMOUNT);
       // @ts-ignore
       const stake = await hodler.connect(user).getStake(operator.address);
       expect(stake).to.equal(0);
@@ -117,17 +117,17 @@ describe("Hodler Stake/Unstake Tests", function () {
 
     it("Should fail unstaking with insufficient stake", async function () {
       // @ts-ignore
-      await hodler.connect(user).unstake(operator.address); // First unstake
+      await hodler.connect(user).unstake(operator.address, STAKE_AMOUNT); // First unstake
 
       await expect(
         // @ts-ignore
-        hodler.connect(user).unstake(operator.address)
+        hodler.connect(user).unstake(operator.address, 1)
       ).to.be.revertedWith("Insufficient stake");
     });
 
     it("Should create vault entry after unstaking", async function () {
       // @ts-ignore
-      const tx = await hodler.connect(user).unstake(operator.address);
+      const tx = await hodler.connect(user).unstake(operator.address, STAKE_AMOUNT);
       const block = await ethers.provider.getBlock(tx.blockNumber!);
       const expectedAvailableAt = block!.timestamp + STAKE_DURATION;
 

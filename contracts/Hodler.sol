@@ -145,11 +145,16 @@ contract Hodler is
         emit Staked(_msgSender(), _address, _amount);
     }
 
-    function unstake(address _address) external whenNotPaused nonReentrant {
+    function unstake(address _address, uint256 _amount) external whenNotPaused nonReentrant {
+        require(_amount > 0, "Insufficient amount for unstaking");
         uint256 stakeAmount = hodlers[_msgSender()].stakes[_address];
-        require(stakeAmount > 0, "Insufficient stake");
+        require(stakeAmount >= _amount, "Insufficient stake");
 
-        delete hodlers[_msgSender()].stakes[_address];
+        if (stakeAmount == _amount) {
+            delete hodlers[_msgSender()].stakes[_address];
+        } else {
+            hodlers[_msgSender()].stakes[_address] = hodlers[_msgSender()].stakes[_address].sub(_amount);
+        }
         emit Unstaked(_msgSender(), _address, stakeAmount);
 
         uint256 availableAt = block.timestamp + STAKE_DURATION;
