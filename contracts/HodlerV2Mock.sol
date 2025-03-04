@@ -27,28 +27,48 @@ contract HodlerV2Mock is
     uint256 public STAKE_DURATION;
     uint256 public GOVERNANCE_DURATION;
 
-    struct Vault {
+    struct VaultData {
         uint256 amount;
         uint256 availableAt;
     }
 
+    struct LockData {
+        string fingerprint;
+        uint256 amount;
+    }
+
+    struct StakeData {
+        address operator;
+        uint256 amount;
+    }
+
     struct HodlerData {
         uint256 available;
-        Vault[] vaults;
-        mapping(string => uint256) locks; // relay fingerprint => amount
-        mapping(address => uint256) stakes; // operator address => amount
+        VaultData[] vaults;
+        LockData[] locks;
+        StakeData[] stakes;
         uint256 votes;
         uint256 gas;
+        bool isSet;
     }
     
     mapping(address => HodlerData) public hodlers;
+    address[] public hodlerKeys;
 
     function getLock(string calldata _fingerprint) external view returns (uint256) {
         uint256 fingerprintLength = bytes(_fingerprint).length;
         require(fingerprintLength > 0, "Fingerprint must have non 0 characters");
         require(fingerprintLength <= 40, "Fingerprint must have 40 or less characters");
 
-        return hodlers[_msgSender()].locks[_fingerprint];
+        uint256 lockAmount = 0;
+        bytes32 bytesFingerprint = keccak256(bytes(_fingerprint));
+        for (uint i = 0; i < hodlers[_msgSender()].locks.length; i++) {
+            if (keccak256(bytes(hodlers[_msgSender()].locks[i].fingerprint)) == bytesFingerprint) {
+                lockAmount = lockAmount + hodlers[_msgSender()].locks[i].amount;
+            }
+        }
+
+        return lockAmount;
     }
 
     // Add new functionality for V2

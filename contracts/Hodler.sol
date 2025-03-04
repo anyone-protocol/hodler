@@ -54,22 +54,33 @@ contract Hodler is
     // be influenced by miners to gain an advantage.
     uint256 private constant TIMESTAMP_BUFFER = 15 * MINUTE;
 
-    struct Vault {
+    struct VaultData {
         uint256 amount;
         uint256 availableAt;
     }
 
+    struct LockData {
+        string fingerprint;
+        uint256 amount;
+    }
+
+    struct StakeData {
+        address operator;
+        uint256 amount;
+    }
+
     struct HodlerData {
         uint256 available;
-        Vault[] vaults;
-        
-        mapping(string => uint256) locks; // relay fingerprint => amount
-        mapping(address => uint256) stakes; // operator address => amount
+        VaultData[] vaults;
+        LockData[] locks;
+        StakeData[] stakes;
         uint256 votes;
         uint256 gas;
+        bool isSet;
     }
     
     mapping(address => HodlerData) public hodlers;
+    address[] public hodlerKeys;
     
     event Locked(address indexed hodler, string fingerprint, uint256 amount);
     event Unlocked(address indexed hodler, string fingerprint, uint256 amount);
@@ -113,7 +124,12 @@ contract Hodler is
                     "Transfer of tokens for the lock failed");
         }
 
-        hodlers[_msgSender()].locks[fingerprint] = hodlers[_msgSender()].locks[fingerprint].add(LOCK_SIZE);
+        if (hodlers[_msgSender()].isSet == false) {
+            hodlerKeys.push(_msgSender());
+            hodlers[_msgSender()].isSet = true;
+        }
+
+        hodlers[_msgSender()].locks.push(LockData(fingerprint, LOCK_SIZE));
         emit Locked(_msgSender(), fingerprint, LOCK_SIZE);
     }
 
@@ -122,14 +138,29 @@ contract Hodler is
         require(fingerprintLength > 0, "Fingerprint must have non 0 characters");
         require(fingerprintLength <= 40, "Fingerprint must have 40 or less characters");
 
-        uint256 lockAmount = hodlers[_msgSender()].locks[fingerprint];
+        uint256 lockAmount = 0;
+        uint safeIndex = 0;
+        bytes32 bytesFingerprint = keccak256(bytes(fingerprint));
+        for (uint i = 0; i < hodlers[_msgSender()].locks.length; i++) {
+            if (keccak256(bytes(hodlers[_msgSender()].locks[i].fingerprint)) == bytesFingerprint) {
+                lockAmount = lockAmount.add(hodlers[_msgSender()].locks[i].amount);
+            } else {
+                if (safeIndex != i) {
+                    hodlers[_msgSender()].locks[safeIndex] = hodlers[_msgSender()].locks[i];
+                }
+                safeIndex++;
+            }
+        }
+
         require(lockAmount > 0, "No lock found for the fingerprint");
         
-        delete hodlers[_msgSender()].locks[fingerprint];
+        while (hodlers[_msgSender()].locks.length > safeIndex) {
+            hodlers[_msgSender()].locks.pop();
+        }
         emit Unlocked(_msgSender(), fingerprint, lockAmount);
 
         uint256 availableAt = block.timestamp + LOCK_DURATION;
-        hodlers[_msgSender()].vaults.push(Vault(lockAmount, availableAt));
+        hodlers[_msgSender()].vaults.push(VaultData(lockAmount, availableAt));
         emit Vaulted(_msgSender(), lockAmount, availableAt);
     }
 
@@ -138,34 +169,74 @@ contract Hodler is
         if (hodlers[_msgSender()].available >= _amount) {
             hodlers[_msgSender()].available = hodlers[_msgSender()].available.sub(_amount);
         } else {
+            if (hodlers[_msgSender()].isSet == false) {
+                hodlerKeys.push(_msgSender());
+                hodlers[_msgSender()].isSet = true;
+            }
+
             require(tokenContract.transferFrom(_msgSender(), address(this), _amount), 
                     "Transfer of tokens for staking failed");
         }
-        hodlers[_msgSender()].stakes[_address] = hodlers[_msgSender()].stakes[_address].add(_amount);
+
+        bool foundStake = false;
+        uint index = 0;
+        while (foundStake == false && index < hodlers[_msgSender()].stakes.length) {
+            if (hodlers[_msgSender()].stakes[index].operator == _address) {
+                hodlers[_msgSender()].stakes[index].amount = hodlers[_msgSender()].stakes[index].amount.add(_amount);
+                foundStake = true;
+            } else {
+                index++;
+            }
+        }
+        if (foundStake == false) {
+            hodlers[_msgSender()].stakes.push(StakeData(_address, _amount));
+        }
+
         emit Staked(_msgSender(), _address, _amount);
     }
 
     function unstake(address _address, uint256 _amount) external whenNotPaused nonReentrant {
         require(_amount > 0, "Insufficient amount for unstaking");
-        uint256 stakeAmount = hodlers[_msgSender()].stakes[_address];
-        require(stakeAmount >= _amount, "Insufficient stake");
-
-        if (stakeAmount == _amount) {
-            delete hodlers[_msgSender()].stakes[_address];
-        } else {
-            hodlers[_msgSender()].stakes[_address] = hodlers[_msgSender()].stakes[_address].sub(_amount);
+        uint safeIndex = 0;
+        bool didUnstake = false;
+        for (uint i = 0; i < hodlers[_msgSender()].stakes.length; i++) {
+            if (hodlers[_msgSender()].stakes[i].operator == _address) {
+                require(hodlers[_msgSender()].stakes[i].amount >= _amount, "Insufficient stake");
+                uint256 oldStake = hodlers[_msgSender()].stakes[i].amount;
+                hodlers[_msgSender()].stakes[i].amount = hodlers[_msgSender()].stakes[i].amount.sub(_amount);
+                didUnstake = true;
+                if (oldStake > _amount) {
+                    safeIndex++;
+                }
+            } else {
+                if (safeIndex != i) {
+                    hodlers[_msgSender()].locks[safeIndex] = hodlers[_msgSender()].locks[i];
+                }
+                safeIndex++;
+            }
         }
-        emit Unstaked(_msgSender(), _address, stakeAmount);
+
+        require(didUnstake == true, "No stake found for the operator address");
+
+        while (hodlers[_msgSender()].locks.length > safeIndex) {
+            hodlers[_msgSender()].locks.pop();
+        }
+
+        emit Unstaked(_msgSender(), _address, _amount);
 
         uint256 availableAt = block.timestamp + STAKE_DURATION;
-        hodlers[_msgSender()].vaults.push(Vault(stakeAmount, availableAt));
-        emit Vaulted(_msgSender(), stakeAmount, availableAt);
+        hodlers[_msgSender()].vaults.push(VaultData(_amount, availableAt));
+        emit Vaulted(_msgSender(), _amount, availableAt);
     }
 
     function addVotes(uint256 _amount) external whenNotPaused nonReentrant {
         if (hodlers[_msgSender()].available >= _amount) {
             hodlers[_msgSender()].available = hodlers[_msgSender()].available.sub(_amount);
         } else {
+            if (hodlers[_msgSender()].isSet == false) {
+                hodlerKeys.push(_msgSender());
+                hodlers[_msgSender()].isSet = true;
+            }
             require(tokenContract.transferFrom(_msgSender(), address(this), _amount), 
                     "Transfer of tokens for voting failed");
         }
@@ -179,12 +250,17 @@ contract Hodler is
         emit RemovedVotes(_msgSender(), _amount);
 
         uint256 availableAt = block.timestamp + GOVERNANCE_DURATION;
-        hodlers[_msgSender()].vaults.push(Vault(_amount, availableAt));
+        hodlers[_msgSender()].vaults.push(VaultData(_amount, availableAt));
 
         emit Vaulted(_msgSender(), _amount, availableAt);
     }
 
     receive() external payable whenNotPaused nonReentrant {
+        if (hodlers[_msgSender()].isSet == false) {
+            hodlerKeys.push(_msgSender());
+            hodlers[_msgSender()].isSet = true;
+        }
+
         hodlers[_msgSender()].gas = hodlers[_msgSender()].gas.add(msg.value);
         controllerAddress.transfer(msg.value);
 
@@ -265,14 +341,28 @@ contract Hodler is
         require(fingerprintLength > 0, "Fingerprint must have non 0 characters");
         require(fingerprintLength <= 40, "Fingerprint must have 40 or less characters");
 
-        return hodlers[_msgSender()].locks[_fingerprint];
+        uint256 lockAmount = 0;
+        bytes32 bytesFingerprint = keccak256(bytes(_fingerprint));
+        for (uint i = 0; i < hodlers[_msgSender()].locks.length; i++) {
+            if (keccak256(bytes(hodlers[_msgSender()].locks[i].fingerprint)) == bytesFingerprint) {
+                lockAmount = lockAmount.add(hodlers[_msgSender()].locks[i].amount);
+            }
+        }
+
+        return lockAmount;
     }
 
     function getStake(address _address) external view returns (uint256) {
-        return hodlers[_msgSender()].stakes[_address];
+        uint256 stakeAmount = 0;
+        for (uint i = 0; i < hodlers[_msgSender()].stakes.length; i++) {
+            if (hodlers[_msgSender()].stakes[i].operator == _address) {
+                stakeAmount = stakeAmount.add(hodlers[_msgSender()].stakes[i].amount);
+            }
+        }
+        return stakeAmount;
     }
 
-    function getVaults() external view returns (Vault[] memory) {
+    function getVaults() external view returns (VaultData[] memory) {
         return hodlers[_msgSender()].vaults;
     }
 
