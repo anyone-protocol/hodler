@@ -53,7 +53,7 @@ describe("Hodler Vault Management", function () {
     await hodler.connect(user).unlock("test-fingerprint");
 
     // @ts-ignore
-    const vaults = await hodler.connect(user).getVaults();
+    const vaults = await hodler.connect(user).getVaults(userAddress);
     expect(vaults.length).to.be.gt(0);
     
     const vault = vaults[0];
@@ -123,7 +123,7 @@ describe("Hodler Vault Management", function () {
 
     const userAddress = await user.getAddress();
     // @ts-ignore
-    let vaults = await hodler.connect(user).getVaults()
+    let vaults = await hodler.connect(user).getVaults(await user.getAddress());
     expect(vaults.length).to.equal(3);
 
     // Advance time and open expired vaults

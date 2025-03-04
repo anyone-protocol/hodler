@@ -83,4 +83,29 @@ contract HodlerV2Mock is
     function _authorizeUpgrade(
         address newImplementation
     ) internal virtual override {}
+
+    function initialize(
+        address _tokenContract,
+        address payable _controllerAddress,
+        address _rewardsPoolAddress,
+        uint256 _lockSize,
+        uint256 _lockDuration,
+        uint256 _stakeDuration,
+        uint256 _governanceDuration
+    ) public initializer {
+        __Pausable_init();
+        __AccessControl_init();
+        __UUPSUpgradeable_init();
+        __ReentrancyGuard_init();
+        
+        tokenContract = IERC20(_tokenContract);
+        controllerAddress = _controllerAddress;
+        rewardsPoolAddress = _rewardsPoolAddress;
+        LOCK_SIZE = _lockSize;
+        LOCK_DURATION = _lockDuration;
+        STAKE_DURATION = _stakeDuration;
+        GOVERNANCE_DURATION = _governanceDuration;
+        
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
 }

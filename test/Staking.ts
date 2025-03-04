@@ -133,7 +133,7 @@ describe("Hodler Stake/Unstake Tests", function () {
 
       // Get the vault entries
       // @ts-ignore
-      const vaults = await hodler.connect(user).getVaults();
+      const vaults = await hodler.connect(user).getVaults(user.address);
 
       expect(vaults[0].amount).to.equal(STAKE_AMOUNT);
       expect(vaults[0].availableAt).to.equal(expectedAvailableAt);

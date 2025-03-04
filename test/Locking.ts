@@ -121,7 +121,7 @@ describe("Hodler Contract - Lock/Unlock Tests", function () {
       await hodler.connect(user).unlock(fingerprint);
 
       // @ts-ignore
-      const vaults = await hodler.connect(user).getVaults();
+      const vaults = await hodler.connect(user).getVaults(user.address);
       
       expect(vaults.length).to.be.above(0);
       expect(vaults[0].amount).to.equal(LOCK_SIZE);

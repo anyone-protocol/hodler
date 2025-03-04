@@ -119,7 +119,7 @@ describe("Hodler Voting Tests", function () {
       await hodler.connect(user).removeVotes(removeAmount);
 
       // @ts-ignore
-      const vaults = await hodler.connect(user).getVaults();
+      const vaults = await hodler.connect(user).getVaults(user.address);
 
       const lastVault = vaults[vaults.length - 1];
       expect(lastVault.amount).to.equal(removeAmount);

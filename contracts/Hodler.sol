@@ -362,8 +362,20 @@ contract Hodler is
         return stakeAmount;
     }
 
-    function getVaults() external view returns (VaultData[] memory) {
-        return hodlers[_msgSender()].vaults;
+    function getHodlerKeys() external view returns (address[] memory) {
+        return hodlerKeys;
+    }
+
+    function getVaults(address _address) external view returns (VaultData[] memory) {
+        return hodlers[_address].vaults;
+    }
+
+    function getLocks(address _address) external view returns (LockData[] memory) {
+        return hodlers[_address].locks;
+    }
+
+    function getStakes(address _address) external view returns (StakeData[] memory) {
+        return hodlers[_address].stakes;
     }
 
     function setLockSize(uint256 _size) external onlyRole(CONTROLLER_ROLE) nonReentrant {
