@@ -18,11 +18,6 @@ const config = {
       allowUnlimitedContractSize: true,
       timeout: 6800000
     },
-    goerli: {
-      url: "https://ethereum-goerli.publicnode.com",
-      accounts: [],
-      timeout: 1800000
-    },
     sepolia: {
       url: "https://sepolia.infura.io/v3/cfed69d3b4fd4630b1957335cdb517cb",
       accounts: [],
