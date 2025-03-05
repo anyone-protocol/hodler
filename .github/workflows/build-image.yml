@@ -5,7 +5,7 @@ on:
     tags:
       - v*
 env:
-  IMAGE_NAME: facilitator
+  IMAGE_NAME: hodler
 
 jobs:
   push:
