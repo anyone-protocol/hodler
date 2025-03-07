@@ -34,6 +34,8 @@ async function main() {
   
   const operatorAddress = process.env.HODLER_OPERATOR_ADDRESS || '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC' // Hardhat #2 
 
+  const rewardsPoolAddress = process.env.REWARDS_POOL_ADDRESS || '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266' // HH #1
+
   console.log(`Deploying Hodler with operator ${operatorAddress}...`)
   
   console.log(`Deploying Hodler with deployer ${deployer.address}...`)
@@ -47,8 +49,7 @@ async function main() {
   
   const instance = await upgrades.deployProxy(
     Contract,
-    [ anyoneAddress, operatorAddress, 
-      lockSize, lockDuration, stakeDuration, governanceDuration ]
+    [ anyoneAddress, operatorAddress, lockSize, lockDuration, stakeDuration, governanceDuration, rewardsPoolAddress ]
   )
   await instance.waitForDeployment()
   const proxyContractAddress = await instance.getAddress()

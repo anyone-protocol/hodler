@@ -11,7 +11,7 @@ job "hodler-deploy-stage-sepolia" {
 
         config {
             network_mode = "host"
-            image = "ghcr.io/anyone-protocol/hodler:0.1.0"
+            image = "ghcr.io/anyone-protocol/hodler:0.1.3"
             entrypoint = ["npx"]
             command = "hardhat"
             args = ["run", "--network", "sepolia", "scripts/deploy.ts"]
@@ -24,10 +24,11 @@ job "hodler-deploy-stage-sepolia" {
         template {
             data = <<EOH
             {{with secret "kv/hodler/sepolia/stage"}}
-                hodler_DEPLOYER_KEY="{{.Data.data.hodler_DEPLOYER_KEY}}"
+                HODLER_DEPLOYER_KEY="{{.Data.data.HODLER_DEPLOYER_KEY}}"
                 CONSUL_TOKEN="{{.Data.data.CONSUL_TOKEN}}"
                 JSON_RPC="{{.Data.data.JSON_RPC}}"
-                hodler_OPERATOR_ADDRESS="{{.Data.data.hodler_OPERATOR_ADDRESS}}"
+                HODLER_OPERATOR_ADDRESS="{{.Data.data.HODLER_OPERATOR_ADDRESS}}"
+                REWARDS_POOL_ADDRESS="{{.Data.data.REWARDS_POOL_ADDRESS}}"
             {{end}}
             EOH
             destination = "secrets/file.env"
