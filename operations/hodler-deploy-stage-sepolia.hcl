@@ -39,7 +39,7 @@ job "hodler-deploy-stage-sepolia" {
             PHASE="stage"
             CONSUL_IP="127.0.0.1"
             CONSUL_PORT="8500"
-            hodler_CONSUL_KEY="hodler/sepolia/stage/address"
+            HODLER_CONSUL_KEY="hodler/sepolia/stage/address"
             ATOR_TOKEN_CONSUL_KEY="ator-token/sepolia/stage/address"
         }
 

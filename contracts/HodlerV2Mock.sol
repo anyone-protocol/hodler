@@ -30,6 +30,8 @@ contract HodlerV2Mock is
     struct VaultData {
         uint256 amount;
         uint256 availableAt;
+        uint kind;
+        string data;
     }
 
     struct LockData {

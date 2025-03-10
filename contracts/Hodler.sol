@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 interface IHodler {
     function version() external pure returns (uint8);
@@ -17,7 +18,6 @@ interface IHodler {
 /// @title Hodler - ANyONe Protocol
 /// @notice Interfaces token: rewards, locking, staking, and governance
 /// @dev UUPS upgradeable pattern with role-based access control
-
 contract Hodler is
     Initializable,
     PausableUpgradeable,
@@ -25,6 +25,8 @@ contract Hodler is
     UUPSUpgradeable,
     ReentrancyGuardUpgradeable
 {
+    using SafeMath for uint256;
+    using Strings for address;
     using SafeMath for uint256;
     using EnumerableMap for EnumerableMap.AddressToUintMap;
     
@@ -57,6 +59,8 @@ contract Hodler is
     struct VaultData {
         uint256 amount;
         uint256 availableAt;
+        uint kind;
+        string data;
     }
 
     struct LockData {
@@ -139,11 +143,13 @@ contract Hodler is
         require(fingerprintLength <= 40, "Fingerprint must have 40 or less characters");
 
         uint256 lockAmount = 0;
+        string memory lockData;
         uint safeIndex = 0;
         bytes32 bytesFingerprint = keccak256(bytes(fingerprint));
         for (uint i = 0; i < hodlers[_msgSender()].locks.length; i++) {
             if (keccak256(bytes(hodlers[_msgSender()].locks[i].fingerprint)) == bytesFingerprint) {
                 lockAmount = lockAmount.add(hodlers[_msgSender()].locks[i].amount);
+                lockData = hodlers[_msgSender()].locks[i].fingerprint;
             } else {
                 if (safeIndex != i) {
                     hodlers[_msgSender()].locks[safeIndex] = hodlers[_msgSender()].locks[i];
@@ -160,7 +166,7 @@ contract Hodler is
         emit Unlocked(_msgSender(), fingerprint, lockAmount);
 
         uint256 availableAt = block.timestamp + LOCK_DURATION;
-        hodlers[_msgSender()].vaults.push(VaultData(lockAmount, availableAt));
+        hodlers[_msgSender()].vaults.push(VaultData(lockAmount, availableAt, 1, lockData));
         emit Vaulted(_msgSender(), lockAmount, availableAt);
     }
 
@@ -199,11 +205,13 @@ contract Hodler is
         require(_amount > 0, "Insufficient amount for unstaking");
         uint safeIndex = 0;
         bool didUnstake = false;
+        address stakeData;
         for (uint i = 0; i < hodlers[_msgSender()].stakes.length; i++) {
             if (hodlers[_msgSender()].stakes[i].operator == _address) {
                 require(hodlers[_msgSender()].stakes[i].amount >= _amount, "Insufficient stake");
                 uint256 oldStake = hodlers[_msgSender()].stakes[i].amount;
                 hodlers[_msgSender()].stakes[i].amount = hodlers[_msgSender()].stakes[i].amount.sub(_amount);
+                stakeData = hodlers[_msgSender()].stakes[i].operator;
                 didUnstake = true;
                 if (oldStake > _amount) {
                     safeIndex++;
@@ -223,9 +231,8 @@ contract Hodler is
         }
 
         emit Unstaked(_msgSender(), _address, _amount);
-
         uint256 availableAt = block.timestamp + STAKE_DURATION;
-        hodlers[_msgSender()].vaults.push(VaultData(_amount, availableAt));
+        hodlers[_msgSender()].vaults.push(VaultData(_amount, availableAt, 2, stakeData.toHexString()));
         emit Vaulted(_msgSender(), _amount, availableAt);
     }
 
@@ -250,7 +257,7 @@ contract Hodler is
         emit RemovedVotes(_msgSender(), _amount);
 
         uint256 availableAt = block.timestamp + GOVERNANCE_DURATION;
-        hodlers[_msgSender()].vaults.push(VaultData(_amount, availableAt));
+        hodlers[_msgSender()].vaults.push(VaultData(_amount, availableAt, 3, ''));
 
         emit Vaulted(_msgSender(), _amount, availableAt);
     }
