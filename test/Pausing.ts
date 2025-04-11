@@ -75,7 +75,7 @@ describe("Hodler Contract Pause Tests", function () {
       // Try to perform operations while paused
       await expect(
         // @ts-ignore
-        hodler.connect(user).lock("testFingerprint")
+        hodler.connect(user).lock("testFingerprint", user.address)
       ).to.be.revertedWith("Pausable: paused");
 
       await expect(

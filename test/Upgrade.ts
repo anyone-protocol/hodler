@@ -67,13 +67,13 @@ describe("Hodler Upgrade Tests", function () {
       // @ts-ignore
       await token.connect(user).approve(await hodler.getAddress(), INITIAL_PARAMS.lockSize);
       // @ts-ignore
-      await hodler.connect(user).lock("testFingerprint");
+      await hodler.connect(user).lock("testFingerprint", user.address);
 
       const HodlerV2Factory = await ethers.getContractFactory("HodlerV2Mock");
       hodlerV2 = await upgrades.upgradeProxy(await hodler.getAddress(), HodlerV2Factory);
 
       // @ts-ignore
-      const lock = await hodlerV2.connect(user).getLock("testFingerprint");
+      const lock = await hodlerV2.connect(user).getLock("testFingerprint", user.address);
       expect(lock).to.equal(INITIAL_PARAMS.lockSize);
       expect(await hodlerV2.LOCK_SIZE()).to.equal(INITIAL_PARAMS.lockSize);
       expect(await hodlerV2.tokenContract()).to.equal(await token.getAddress());

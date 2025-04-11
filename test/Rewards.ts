@@ -89,19 +89,21 @@ describe("Hodler Rewards and Gas Management", function () {
         value: oneEth
       });
 
-      const reward = ethers.parseEther("10")
+      const relayReward = ethers.parseEther("10")
+      const stakeReward = ethers.parseEther("5")
       const gasEstimate = 1_000_000n
 
       // @ts-ignore
-      await token.connect(owner).transfer(rewardsPool.address, reward);
+      await token.connect(owner).transfer(rewardsPool.address, relayReward + stakeReward);
 
       // @ts-ignore
-      await token.connect(rewardsPool).approve(await hodler.getAddress(), reward)
+      await token.connect(rewardsPool).approve(await hodler.getAddress(), relayReward + stakeReward)
 
       // @ts-ignore
       const tx = await hodler.connect(controller).reward(
         user.address,
-        reward,
+        relayReward,
+        stakeReward,
         gasEstimate,
         false
       );
@@ -116,26 +118,28 @@ describe("Hodler Rewards and Gas Management", function () {
         value: oneEth
       });
 
-      const rewardAmount = ethers.parseEther("10");
+      const relayReward = ethers.parseEther("10");
+      const stakeReward = ethers.parseEther("5");
 
       // @ts-ignore
-      await token.connect(owner).transfer(rewardsPool.address, rewardAmount);
+      await token.connect(owner).transfer(rewardsPool.address, relayReward + stakeReward);
 
       // @ts-ignore
-      await token.connect(rewardsPool).approve(await hodler.getAddress(), rewardAmount);
+      await token.connect(rewardsPool).approve(await hodler.getAddress(), relayReward + stakeReward);
       
       // @ts-ignore
       await expect(hodler.connect(controller).reward(
         user.address,
-        rewardAmount,
+        relayReward,
+        stakeReward,
         10000,
         false
       ))
         .to.emit(hodler, "Rewarded")
-        .withArgs(user.address, rewardAmount, false);
+        .withArgs(user.address, relayReward + stakeReward, false, relayReward, stakeReward);
 
       const userData = await hodler.hodlers(user.address);
-      expect(userData.available).to.equal(rewardAmount);
+      expect(userData.available).to.equal(relayReward + stakeReward);
     });
 
     it("Should fail rewards with insufficient gas budget", async function () {
@@ -151,6 +155,7 @@ describe("Hodler Rewards and Gas Management", function () {
         hodler.connect(controller).reward(
           user.address,
           ethers.parseEther("10"),
+          ethers.parseEther("5"),
           ethers.parseEther("1.0"),
           false
         )

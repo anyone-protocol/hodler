@@ -49,7 +49,7 @@ describe("Hodler Withdrawal Tests", function () {
     // @ts-ignore
     await token.connect(rewardsPool).approve(await hodler.getAddress(), ethers.parseEther("100"))
     // @ts-ignore
-    await hodler.connect(controller).reward(user.address, ethers.parseEther("100"), 0, false);
+    await hodler.connect(controller).reward(user.address, ethers.parseEther("100"), 0, 0, false);
   });
 
   describe("Withdrawal Tests", function () {

@@ -111,12 +111,13 @@ describe("Hodler Access Control Tests", function () {
     });
 
     it("should allow controller to reward users", async function () {
-      const rewardAmount = ethers.parseEther("10");
+      const relayRewardAmount = ethers.parseEther("10");
+      const stakingRewardAmount = ethers.parseEther("1");
       const gasEstimate = 21000;
       
       // check is to see if controller can call function, not if it executes correctly
       // @ts-ignore
-      await expect(hodler.connect(controller).reward(unauthorized.address, rewardAmount, gasEstimate, false))
+      await expect(hodler.connect(controller).reward(unauthorized.address, relayRewardAmount, stakingRewardAmount, gasEstimate, false))
         .to.be.revertedWith("Insufficient gas budget for hodler account");
     });
 

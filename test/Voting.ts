@@ -55,10 +55,11 @@ describe("Hodler Voting Tests", function () {
     });
 
     it("Should use available balance first when voting", async function () {
+      const userAddress = await user.getAddress();
       // @ts-ignore
-      await hodler.connect(user).lock("test-fingerprint");
+      await hodler.connect(user).lock("test-fingerprint", userAddress);
       // @ts-ignore
-      await hodler.connect(user).unlock("test-fingerprint");
+      await hodler.connect(user).unlock("test-fingerprint", userAddress);
       
       await time.increase(2 * LOCK_DURATION);
 

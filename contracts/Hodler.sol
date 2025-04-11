@@ -65,6 +65,7 @@ contract Hodler is
 
     struct LockData {
         string fingerprint;
+        address operator;
         uint256 amount;
     }
 
@@ -81,13 +82,15 @@ contract Hodler is
         uint256 votes;
         uint256 gas;
         bool isSet;
+        uint256 claimedRelayRewards;
+        uint256 claimedStakingRewards;
     }
     
     mapping(address => HodlerData) public hodlers;
     address[] public hodlerKeys;
     
-    event Locked(address indexed hodler, string fingerprint, uint256 amount);
-    event Unlocked(address indexed hodler, string fingerprint, uint256 amount);
+    event Locked(address indexed hodler, string fingerprint, uint256 amount, address operator);
+    event Unlocked(address indexed hodler, string fingerprint, uint256 amount, address operator);
 
     event Staked(address indexed hodler, address indexed operator, uint256 amount);
     event Unstaked(address indexed hodler, address indexed operator, uint256 amount);
@@ -98,8 +101,8 @@ contract Hodler is
     event Vaulted(address indexed hodler, uint256 amount, uint256 availableAt);
     
     event UpdateRewards(address indexed hodler, uint256 gasEstimate, bool redeem);
-    event Rewarded(address indexed hodler, uint256 amount, bool redeemed);
-
+    event Rewarded(address indexed hodler, uint256 amount, bool redeemed, uint256 relayRewardAmount, uint256 stakingRewardAmount);
+    
     event Withdrawn(address indexed hodler, uint256 amount);
     
     event LockSizeUpdated(address indexed controller, uint256 oldValue, uint256 newValue);
@@ -116,7 +119,7 @@ contract Hodler is
         uint256 governanceDuration
     );
 
-    function lock(string calldata fingerprint) external whenNotPaused nonReentrant {
+    function lock(string calldata fingerprint, address _operator) external whenNotPaused nonReentrant {
         uint256 fingerprintLength = bytes(fingerprint).length;
         require(fingerprintLength > 0, "Fingerprint must have non 0 characters");
         require(fingerprintLength <= 40, "Fingerprint must have 40 or less characters");
@@ -133,11 +136,11 @@ contract Hodler is
             hodlers[_msgSender()].isSet = true;
         }
 
-        hodlers[_msgSender()].locks.push(LockData(fingerprint, LOCK_SIZE));
-        emit Locked(_msgSender(), fingerprint, LOCK_SIZE);
+        hodlers[_msgSender()].locks.push(LockData(fingerprint, _operator, LOCK_SIZE));
+        emit Locked(_msgSender(), fingerprint, LOCK_SIZE, _operator);
     }
 
-    function unlock(string calldata fingerprint) external whenNotPaused nonReentrant {        
+    function unlock(string calldata fingerprint, address _operator) external whenNotPaused nonReentrant {        
         uint256 fingerprintLength = bytes(fingerprint).length;
         require(fingerprintLength > 0, "Fingerprint must have non 0 characters");
         require(fingerprintLength <= 40, "Fingerprint must have 40 or less characters");
@@ -147,7 +150,8 @@ contract Hodler is
         uint safeIndex = 0;
         bytes32 bytesFingerprint = keccak256(bytes(fingerprint));
         for (uint i = 0; i < hodlers[_msgSender()].locks.length; i++) {
-            if (keccak256(bytes(hodlers[_msgSender()].locks[i].fingerprint)) == bytesFingerprint) {
+            if (keccak256(bytes(hodlers[_msgSender()].locks[i].fingerprint)) == bytesFingerprint
+                && hodlers[_msgSender()].locks[i].operator == _operator) {
                 lockAmount = lockAmount.add(hodlers[_msgSender()].locks[i].amount);
                 lockData = hodlers[_msgSender()].locks[i].fingerprint;
             } else {
@@ -163,7 +167,7 @@ contract Hodler is
         while (hodlers[_msgSender()].locks.length > safeIndex) {
             hodlers[_msgSender()].locks.pop();
         }
-        emit Unlocked(_msgSender(), fingerprint, lockAmount);
+        emit Unlocked(_msgSender(), fingerprint, lockAmount, _operator);
 
         uint256 availableAt = block.timestamp + LOCK_DURATION;
         hodlers[_msgSender()].vaults.push(VaultData(lockAmount, availableAt, 1, lockData));
@@ -328,22 +332,32 @@ contract Hodler is
     
     function reward(
         address _address,
-        uint256 _rewardAmount,
+        uint256 _relayRewardAllocation,
+        uint256 _stakingRewardAllocation,
         uint256 _gasEstimate,
         bool _redeem
     ) external onlyRole(CONTROLLER_ROLE) whenNotPaused nonReentrant {
         require(hodlers[_address].gas >= _gasEstimate, "Insufficient gas budget for hodler account");
         hodlers[_address].gas = hodlers[_address].gas.sub(_gasEstimate);
+
+        uint256 relayRewardAmount = _relayRewardAllocation.sub(hodlers[_address].claimedRelayRewards);
+        uint256 stakingRewardAmount = _stakingRewardAllocation.sub(hodlers[_address].claimedStakingRewards);
+        uint256 rewardAmount = relayRewardAmount.add(stakingRewardAmount);
+        require(rewardAmount > 0, "No rewards to claim");
+        
+        hodlers[_address].claimedRelayRewards = _relayRewardAllocation;
+        hodlers[_address].claimedStakingRewards = _stakingRewardAllocation;
+
         if (_redeem) {
-            require(tokenContract.transferFrom(rewardsPoolAddress, _address, _rewardAmount), "Withdrawal of reward tokens failed");
+            require(tokenContract.transferFrom(rewardsPoolAddress, _address, rewardAmount), "Withdrawal of reward tokens failed");
         } else {
-            require(tokenContract.transferFrom(rewardsPoolAddress, address(this), _rewardAmount), "Transfer of reward tokens failed");
-            hodlers[_address].available = hodlers[_address].available.add(_rewardAmount);
+            require(tokenContract.transferFrom(rewardsPoolAddress, address(this), rewardAmount), "Transfer of reward tokens failed");
+            hodlers[_address].available = hodlers[_address].available.add(rewardAmount);
         }
-        emit Rewarded(_address, _rewardAmount, _redeem);
+        emit Rewarded(_address, rewardAmount, _redeem, relayRewardAmount, stakingRewardAmount);
     }
 
-    function getLock(string calldata _fingerprint) external view returns (uint256) {
+    function getLock(string calldata _fingerprint, address _operator) external view returns (uint256) {
         uint256 fingerprintLength = bytes(_fingerprint).length;
         require(fingerprintLength > 0, "Fingerprint must have non 0 characters");
         require(fingerprintLength <= 40, "Fingerprint must have 40 or less characters");
@@ -351,7 +365,9 @@ contract Hodler is
         uint256 lockAmount = 0;
         bytes32 bytesFingerprint = keccak256(bytes(_fingerprint));
         for (uint i = 0; i < hodlers[_msgSender()].locks.length; i++) {
-            if (keccak256(bytes(hodlers[_msgSender()].locks[i].fingerprint)) == bytesFingerprint) {
+            if (keccak256(bytes(hodlers[_msgSender()].locks[i].fingerprint)) == bytesFingerprint
+                && hodlers[_msgSender()].locks[i].operator == _operator) {
+                
                 lockAmount = lockAmount.add(hodlers[_msgSender()].locks[i].amount);
             }
         }

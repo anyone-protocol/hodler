@@ -48,9 +48,9 @@ describe("Hodler Vault Management", function () {
   it("Should correctly track vault entries", async function () {
     const userAddress = await user.getAddress();
     // @ts-ignore
-    await hodler.connect(user).lock("test-fingerprint");
+    await hodler.connect(user).lock("test-fingerprint", userAddress);
     // @ts-ignore
-    await hodler.connect(user).unlock("test-fingerprint");
+    await hodler.connect(user).unlock("test-fingerprint", userAddress);
 
     // @ts-ignore
     const vaults = await hodler.connect(user).getVaults(userAddress);
@@ -62,10 +62,11 @@ describe("Hodler Vault Management", function () {
   });
 
   it("Should respect TIMESTAMP_BUFFER when opening expired vaults", async function () {
+    const userAddress = await user.getAddress();
     // @ts-ignore
-    await hodler.connect(user).lock("test-fingerprint");
+    await hodler.connect(user).lock("test-fingerprint", userAddress);
     // @ts-ignore
-    await hodler.connect(user).unlock("test-fingerprint");
+    await hodler.connect(user).unlock("test-fingerprint", userAddress);
 
     // Try to open just before buffer period
     await time.increase(LOCK_DURATION - TIMESTAMP_BUFFER/2);
@@ -77,10 +78,11 @@ describe("Hodler Vault Management", function () {
   });
 
   it("Should only open truly expired vaults", async function () {
+    const userAddress = await user.getAddress();
     // @ts-ignore
-    await hodler.connect(user).lock("lock1");
+    await hodler.connect(user).lock("lock1", userAddress);
     // @ts-ignore
-    await hodler.connect(user).unlock("lock1");
+    await hodler.connect(user).unlock("lock1", userAddress);
     // @ts-ignore
     await hodler.connect(user).addVotes(LOCK_SIZE);
     // @ts-ignore
@@ -95,10 +97,11 @@ describe("Hodler Vault Management", function () {
   });
 
   it("Should update available balance after opening vaults", async function () {
+    const userAddress = await user.getAddress();
     // @ts-ignore
-    await hodler.connect(user).lock("test-fingerprint");
+    await hodler.connect(user).lock("test-fingerprint", userAddress);
     // @ts-ignore
-    await hodler.connect(user).unlock("test-fingerprint");
+    await hodler.connect(user).unlock("test-fingerprint", userAddress);
 
     // @ts-ignore
     const initial = await hodler.hodlers(await user.getAddress());
@@ -113,17 +116,17 @@ describe("Hodler Vault Management", function () {
   });
 
   it("Should handle multiple vault entries correctly", async function () {
+    const userAddress = await user.getAddress();
     // Create multiple vault entries
     for(let i = 0; i < 3; i++) {
       // @ts-ignore
-      await hodler.connect(user).lock(`lock-${i}`);
+      await hodler.connect(user).lock(`lock-${i}`, userAddress);
       // @ts-ignore
-      await hodler.connect(user).unlock(`lock-${i}`);
+      await hodler.connect(user).unlock(`lock-${i}`, userAddress);
     }
 
-    const userAddress = await user.getAddress();
     // @ts-ignore
-    let vaults = await hodler.connect(user).getVaults(await user.getAddress());
+    let vaults = await hodler.connect(user).getVaults(userAddress);
     expect(vaults.length).to.equal(3);
 
     // Advance time and open expired vaults

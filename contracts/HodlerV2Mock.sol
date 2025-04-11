@@ -36,6 +36,7 @@ contract HodlerV2Mock is
 
     struct LockData {
         string fingerprint;
+        address operator;
         uint256 amount;
     }
 
@@ -52,12 +53,14 @@ contract HodlerV2Mock is
         uint256 votes;
         uint256 gas;
         bool isSet;
+        uint256 claimedRelayRewards;
+        uint256 claimedStakingRewards;
     }
     
     mapping(address => HodlerData) public hodlers;
     address[] public hodlerKeys;
 
-    function getLock(string calldata _fingerprint) external view returns (uint256) {
+    function getLock(string calldata _fingerprint, address _operator) external view returns (uint256) {
         uint256 fingerprintLength = bytes(_fingerprint).length;
         require(fingerprintLength > 0, "Fingerprint must have non 0 characters");
         require(fingerprintLength <= 40, "Fingerprint must have 40 or less characters");
@@ -65,7 +68,8 @@ contract HodlerV2Mock is
         uint256 lockAmount = 0;
         bytes32 bytesFingerprint = keccak256(bytes(_fingerprint));
         for (uint i = 0; i < hodlers[_msgSender()].locks.length; i++) {
-            if (keccak256(bytes(hodlers[_msgSender()].locks[i].fingerprint)) == bytesFingerprint) {
+            if (keccak256(bytes(hodlers[_msgSender()].locks[i].fingerprint)) == bytesFingerprint
+                && hodlers[_msgSender()].locks[i].operator == _operator) {
                 lockAmount = lockAmount + hodlers[_msgSender()].locks[i].amount;
             }
         }

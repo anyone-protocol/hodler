@@ -44,17 +44,17 @@ describe("Hodler Contract - Lock/Unlock Tests", function () {
     it("Should lock tokens with valid fingerprint", async function () {
       const fingerprint = "validFingerprint123";
       // @ts-ignore
-      await hodler.connect(user).lock(fingerprint);
+      await hodler.connect(user).lock(fingerprint, user.address);
 
       // @ts-ignore
-      const lockAmount = await hodler.connect(user).getLock(fingerprint)
+      const lockAmount = await hodler.connect(user).getLock(fingerprint, user.address)
       expect(lockAmount).to.equal(LOCK_SIZE);
     });
 
     it("Should fail locking with empty fingerprint", async function () {
       await expect(
         // @ts-ignore
-        hodler.connect(user).lock("")
+        hodler.connect(user).lock("", user.address)
       ).to.be.revertedWith("Fingerprint must have non 0 characters");
     });
 
@@ -62,16 +62,16 @@ describe("Hodler Contract - Lock/Unlock Tests", function () {
       const longFingerprint = "a".repeat(41);
       await expect(
         // @ts-ignore
-        hodler.connect(user).lock(longFingerprint)
+        hodler.connect(user).lock(longFingerprint, user.address)
       ).to.be.revertedWith("Fingerprint must have 40 or less characters");
     });
 
     it("Should lock using available balance first", async function () {
       // First add some available balance
       // @ts-ignore
-      await hodler.connect(user).lock("fingerprint1");
+      await hodler.connect(user).lock("fingerprint1", user.address);
       // @ts-ignore
-      await hodler.connect(user).unlock("fingerprint1");
+      await hodler.connect(user).unlock("fingerprint1", user.address);
       await network.provider.send('evm_increaseTime', [LOCK_DURATION + 1000]);
       await network.provider.send("evm_mine");
       // @ts-ignore
@@ -79,7 +79,7 @@ describe("Hodler Contract - Lock/Unlock Tests", function () {
       
       const initialBalance = await token.balanceOf(user.address);
       // @ts-ignore
-      await hodler.connect(user).lock("fingerprint2");
+      await hodler.connect(user).lock("fingerprint2", user.address);
 
       const finalBalance = await token.balanceOf(user.address);
       expect(finalBalance).to.equal(initialBalance); // Balance shouldn't change
@@ -88,7 +88,7 @@ describe("Hodler Contract - Lock/Unlock Tests", function () {
     it("Should transfer tokens when available balance insufficient", async function () {
       const initialBalance = await token.balanceOf(user.address);
       // @ts-ignore
-      await hodler.connect(user).lock("fingerprint");
+      await hodler.connect(user).lock("fingerprint", user.address);
 
       const finalBalance = await token.balanceOf(user.address);
       expect(finalBalance).to.equal(initialBalance - LOCK_SIZE);
@@ -97,28 +97,28 @@ describe("Hodler Contract - Lock/Unlock Tests", function () {
     it("Should unlock tokens correctly", async function () {
       const fingerprint = "testFingerprint";
       // @ts-ignore
-      await hodler.connect(user).lock(fingerprint);
+      await hodler.connect(user).lock(fingerprint, user.address);
       // @ts-ignore
-      await hodler.connect(user).unlock(fingerprint);
+      await hodler.connect(user).unlock(fingerprint, user.address);
 
       // @ts-ignore
-      const lockAmount = await hodler.connect(user).getLock(fingerprint);
+      const lockAmount = await hodler.connect(user).getLock(fingerprint, user.address);
       expect(lockAmount).to.equal(0);
     });
 
     it("Should fail unlocking non-existent locks", async function () {
       await expect(
         // @ts-ignore
-        hodler.connect(user).unlock("nonexistentFingerprint")
+        hodler.connect(user).unlock("nonexistentFingerprint", user.address)
       ).to.be.revertedWith("No lock found for the fingerprint");
     });
 
     it("Should create vault entry after unlocking", async function () {
       const fingerprint = "testFingerprint";
       // @ts-ignore
-      await hodler.connect(user).lock(fingerprint);
+      await hodler.connect(user).lock(fingerprint, user.address);
       // @ts-ignore
-      await hodler.connect(user).unlock(fingerprint);
+      await hodler.connect(user).unlock(fingerprint, user.address);
 
       // @ts-ignore
       const vaults = await hodler.connect(user).getVaults(user.address);
