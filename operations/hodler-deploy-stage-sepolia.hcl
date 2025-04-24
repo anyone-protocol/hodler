@@ -11,7 +11,7 @@ job "hodler-deploy-stage-sepolia" {
 
         config {
             network_mode = "host"
-            image = "ghcr.io/anyone-protocol/hodler:0.1.4"
+            image = "ghcr.io/anyone-protocol/hodler:0.1.5"
             entrypoint = ["npx"]
             command = "hardhat"
             args = ["run", "--network", "sepolia", "scripts/deploy.ts"]
