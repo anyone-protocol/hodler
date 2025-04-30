@@ -11,7 +11,7 @@ job "hodler-scripting-stage-sepolia" {
 
         config {
             network_mode = "host"
-            image = "ghcr.io/anyone-protocol/hodler:0.1.6"
+            image = "ghcr.io/anyone-protocol/hodler:0.1.7"
             entrypoint = ["npx"]
             command = "hardhat"
             args = ["run", "--network", "sepolia", "scripts/lockSize.ts"]
@@ -24,7 +24,7 @@ job "hodler-scripting-stage-sepolia" {
         template {
             data = <<EOH
             {{with secret "kv/hodler/sepolia/stage"}}
-                HODLER_DEPLOYER_KEY="{{.Data.data.HODLER_DEPLOYER_KEY}}"
+                HODLER_OPERATOR_KEY="{{.Data.data.HODLER_OPERATOR_KEY}}"
                 CONSUL_TOKEN="{{.Data.data.CONSUL_TOKEN}}"
                 JSON_RPC="{{.Data.data.JSON_RPC}}"
             {{end}}

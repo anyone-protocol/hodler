@@ -23,7 +23,7 @@ async function main() {
 
   console.log(`Updating hodler ${hodlerAddress} with new lock size...`)
 
-  const deployerPrivateKey = process.env.HODLER_DEPLOYER_KEY || '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d' // HH #1
+  const deployerPrivateKey = process.env.HODLER_OPERATOR_KEY || '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d' // HH #1
   const [ owner ] = await ethers.getSigners()
 
   const deployer = deployerPrivateKey
