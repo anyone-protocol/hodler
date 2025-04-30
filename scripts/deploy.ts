@@ -42,14 +42,14 @@ async function main() {
   
   const Contract = await ethers.getContractFactory('Hodler', deployer)
 
-  const lockSize = 100
+  const lockSize = '100'
   const lockDuration = 60 * 60 * 24 * 30 // 30 days
   const stakeDuration = 60 * 60 * 24 * 7 // 7 days
   const governanceDuration = 60 * 60 * 24 * 30 // 30 days
   
   const instance = await upgrades.deployProxy(
     Contract,
-    [ anyoneAddress, operatorAddress, lockSize, lockDuration, stakeDuration, governanceDuration, rewardsPoolAddress ]
+    [ anyoneAddress, operatorAddress, ethers.parseEther(lockSize), lockDuration, stakeDuration, governanceDuration, rewardsPoolAddress ]
   )
   await instance.waitForDeployment()
   const proxyContractAddress = await instance.getAddress()
