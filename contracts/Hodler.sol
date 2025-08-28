@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -27,6 +28,7 @@ contract Hodler is
 {
     using Strings for address;
     using SafeMath for uint256;
+    using SafeCast for uint256;
     using EnumerableMap for EnumerableMap.AddressToUintMap;
     
     uint8 public constant VERSION = 1;
@@ -40,22 +42,22 @@ contract Hodler is
     address public rewardsPoolAddress;
 
     uint256 public LOCK_SIZE;
-    uint256 public LOCK_DURATION; 
-    uint256 public STAKE_DURATION;
-    uint256 public GOVERNANCE_DURATION;
+    uint64 public LOCK_DURATION; 
+    uint64 public STAKE_DURATION;
+    uint64 public GOVERNANCE_DURATION;
 
-    uint256 private constant MINUTE = 60;
-    uint256 private constant HOUR = 60 * MINUTE;
-    uint256 private constant DAY = 24 * HOUR;
-    uint256 private constant WEEK = 7 * DAY;
-    uint256 private constant MONTH = 30 * DAY;
+    uint64 private constant MINUTE = 60;
+    uint64 private constant HOUR = 60 * MINUTE;
+    uint64 private constant DAY = 24 * HOUR;
+    uint64 private constant WEEK = 7 * DAY;
+    uint64 private constant MONTH = 30 * DAY;
     
-    uint256 private constant TIMESTAMP_BUFFER = 1 * HOUR;
+    uint64 private constant TIMESTAMP_BUFFER = 1 * HOUR;
 
     struct VaultData {
         uint256 amount;
-        uint256 availableAt;
-        uint kind;
+        uint64 availableAt;
+        uint8 kind;
         string data;
     }
 
@@ -110,9 +112,9 @@ contract Hodler is
         address tokenAddress,
         address controller,
         uint256 lockSize,
-        uint256 lockDuration,
-        uint256 stakeDuration,
-        uint256 governanceDuration
+        uint64 lockDuration,
+        uint64 stakeDuration,
+        uint64 governanceDuration
     );
 
     function lock(string calldata fingerprint, address _operator) external whenNotPaused nonReentrant {
@@ -165,7 +167,7 @@ contract Hodler is
         }
         emit Unlocked(_msgSender(), fingerprint, lockAmount, _operator);
 
-        uint256 availableAt = block.timestamp + LOCK_DURATION;
+        uint64 availableAt = block.timestamp.add(LOCK_DURATION).toUint64();
         hodlers[_msgSender()].vaults.push(VaultData(lockAmount, availableAt, 1, lockData));
         emit Vaulted(_msgSender(), lockAmount, availableAt);
     }
@@ -231,7 +233,7 @@ contract Hodler is
         }
 
         emit Unstaked(_msgSender(), _address, _amount);
-        uint256 availableAt = block.timestamp + STAKE_DURATION;
+        uint64 availableAt = block.timestamp.add(STAKE_DURATION).toUint64();
         hodlers[_msgSender()].vaults.push(VaultData(_amount, availableAt, 2, stakeData.toHexString()));
         emit Vaulted(_msgSender(), _amount, availableAt);
     }
@@ -256,50 +258,60 @@ contract Hodler is
         hodlers[_msgSender()].votes = hodlers[_msgSender()].votes.sub(_amount);
         emit RemovedVotes(_msgSender(), _amount);
 
-        uint256 availableAt = block.timestamp + GOVERNANCE_DURATION;
+        uint64 availableAt = block.timestamp.add(GOVERNANCE_DURATION).toUint64();
         hodlers[_msgSender()].vaults.push(VaultData(_amount, availableAt, 3, ''));
 
         emit Vaulted(_msgSender(), _amount, availableAt);
     }
 
     receive() external payable whenNotPaused nonReentrant {
+        require(msg.value > 0, "Must send ETH");
+
         if (hodlers[_msgSender()].isSet == false) {
             hodlerKeys.push(_msgSender());
             hodlers[_msgSender()].isSet = true;
         }
 
-        hodlers[_msgSender()].gas = hodlers[_msgSender()].gas.add(msg.value);
-        controllerAddress.transfer(msg.value);
-
         uint256 gasTest = gasleft();
         hodlers[_msgSender()].gas = hodlers[_msgSender()].gas.sub(0);
         hodlers[_msgSender()].available = hodlers[_msgSender()].available.add(0);
         require(hodlers[_msgSender()].gas >= 0, "Insufficient gas budget for hodler account");
-        uint256 gasEstimate = gasTest - gasleft();
+        
+        uint256 gasEstimate = gasTest.sub(gasleft()).mul(3);
 
         require(
-            hodlers[_msgSender()].gas > gasEstimate,
+            hodlers[_msgSender()].gas.add(msg.value) > gasEstimate,
             "Not enough gas budget for updating the hodler account"
         );
+
+        hodlers[_msgSender()].gas = hodlers[_msgSender()].gas.add(msg.value);
+        
         emit UpdateRewards(_msgSender(), gasEstimate, false);
+                
+        (bool sent, ) = controllerAddress.call{value: msg.value}("");
+        require(sent, "Failed to send ETH to controller");
     }
 
     function redeem() external whenNotPaused nonReentrant {
+        require(hodlers[_msgSender()].isSet, "Hodler account not found");
+
         uint256 gasTest = gasleft();
         hodlers[_msgSender()].gas = hodlers[_msgSender()].gas.sub(0);
         hodlers[_msgSender()].available = hodlers[_msgSender()].available.add(0);
         require(hodlers[_msgSender()].gas >= 0, "Insufficient gas budget for hodler account");
-        uint256 gasEstimate = gasTest - gasleft();
+        
+        uint256 gasEstimate = gasTest.sub(gasleft()).mul(3);
 
         require(
             hodlers[_msgSender()].gas > gasEstimate,
             "Not enough gas budget for updating the hodler account"
         );
+
         emit UpdateRewards(_msgSender(), gasEstimate, true);
     }
 
     function openExpired() external whenNotPaused nonReentrant {
-        uint256 bufferedTimestamp = block.timestamp.sub(TIMESTAMP_BUFFER);
+        uint64 bufferedTimestamp = block.timestamp.sub(TIMESTAMP_BUFFER).toUint64();
         uint256 safeIndex = 0;
         uint256 claimed = 0;
         for (uint256 i = 0; i < hodlers[_msgSender()].vaults.length; i++) {
@@ -414,21 +426,21 @@ contract Hodler is
         emit LockSizeUpdated(controllerAddress, oldValue, _size);
     }
 
-    function setLockDuration(uint256 _seconds) external onlyRole(CONTROLLER_ROLE) nonReentrant {
+    function setLockDuration(uint64 _seconds) external onlyRole(CONTROLLER_ROLE) nonReentrant {
         require(isValidDuration(_seconds), "Invalid duration for locking");
         uint256 oldValue = LOCK_DURATION;
         LOCK_DURATION = _seconds;
         emit LockDurationUpdated(controllerAddress, oldValue, _seconds);
     }
 
-    function setStakeDuration(uint256 _seconds) external onlyRole(CONTROLLER_ROLE) nonReentrant {
+    function setStakeDuration(uint64 _seconds) external onlyRole(CONTROLLER_ROLE) nonReentrant {
         require(isValidDuration(_seconds), "Invalid duration for staking");
         uint256 oldValue = STAKE_DURATION;
         STAKE_DURATION = _seconds;
         emit StakeDurationUpdated(controllerAddress, oldValue, _seconds);
     }
 
-    function setGovernanceDuration(uint256 _seconds) external onlyRole(CONTROLLER_ROLE) nonReentrant {
+    function setGovernanceDuration(uint64 _seconds) external onlyRole(CONTROLLER_ROLE) nonReentrant {
         require(isValidDuration(_seconds), "Invalid duration for governance");
         uint256 oldValue = GOVERNANCE_DURATION;
         GOVERNANCE_DURATION = _seconds;
@@ -444,9 +456,9 @@ contract Hodler is
         address _tokenAddress, 
         address payable _controller,
         uint256 _lockSize,
-        uint256 _lockDuration,
-        uint256 _stakeDuration,
-        uint256 _governanceDuration,
+        uint64 _lockDuration,
+        uint64 _stakeDuration,
+        uint64 _governanceDuration,
         address _rewardsPoolAddress
     ) initializer public {        
         require(_lockSize > 0, "Lock size must be greater than 0");

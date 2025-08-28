@@ -58,8 +58,6 @@ describe("Hodler Stake/Unstake Tests", function () {
         to: await hodler.getAddress(),
         value: ethers.parseEther("1")
       });
-      // @ts-ignore
-      await token.connect(user).transfer(await hodler.getAddress(), ethers.parseEther("1"));
 
       // @ts-ignore
       await token.connect(owner).transfer(rewardsPool.address, LOCK_SIZE);

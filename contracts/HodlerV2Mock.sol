@@ -23,14 +23,14 @@ contract HodlerV2Mock is
     address public rewardsPoolAddress;
 
     uint256 public LOCK_SIZE;
-    uint256 public LOCK_DURATION; 
-    uint256 public STAKE_DURATION;
-    uint256 public GOVERNANCE_DURATION;
+    uint64 public LOCK_DURATION; 
+    uint64 public STAKE_DURATION;
+    uint64 public GOVERNANCE_DURATION;
 
     struct VaultData {
         uint256 amount;
-        uint256 availableAt;
-        uint kind;
+        uint64 availableAt;
+        uint8 kind;
         string data;
     }
 
@@ -95,9 +95,9 @@ contract HodlerV2Mock is
         address payable _controllerAddress,
         address _rewardsPoolAddress,
         uint256 _lockSize,
-        uint256 _lockDuration,
-        uint256 _stakeDuration,
-        uint256 _governanceDuration
+        uint64 _lockDuration,
+        uint64 _stakeDuration,
+        uint64 _governanceDuration
     ) public initializer {
         __Pausable_init();
         __AccessControl_init();
