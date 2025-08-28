@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { ethers, network, upgrades } from "hardhat";
 import { Contract, Signer } from "ethers";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
+import exp from "constants";
 
 describe("Hodler Vault Management", function () {
   let hodler: Contract;
@@ -14,7 +15,7 @@ describe("Hodler Vault Management", function () {
   const MINUTE = 60;
   const HOUR = 60 * MINUTE;
   const DAY = 24 * HOUR;
-  const TIMESTAMP_BUFFER = 15 * MINUTE;
+  const TIMESTAMP_BUFFER = 1 * HOUR;
   
   const LOCK_SIZE = ethers.parseEther("100");
   const LOCK_DURATION = 7 * DAY;
@@ -94,6 +95,7 @@ describe("Hodler Vault Management", function () {
 
     const hodlerData = await hodler.hodlers(await user.getAddress());
     expect(hodlerData.available).to.equal(LOCK_SIZE); // Only first vault should be opened
+    
   });
 
   it("Should update available balance after opening vaults", async function () {
@@ -136,5 +138,47 @@ describe("Hodler Vault Management", function () {
 
     const hodlerData = await hodler.hodlers(userAddress);
     expect(hodlerData.available).to.equal(LOCK_SIZE * BigInt(3));
+  });
+
+  it("Should handle few of multiple vault entries correctly", async function () {
+    const userAddress = await user.getAddress();
+    
+    // @ts-ignore
+    await hodler.connect(user).lock(`lock-0`, userAddress);
+    // @ts-ignore
+    await hodler.connect(user).unlock(`lock-0`, userAddress);
+
+    // @ts-ignore
+    await hodler.connect(user).stake(userAddress, 1n);
+    // @ts-ignore
+    await hodler.connect(user).unstake(userAddress, 1n);
+
+    await time.increase(LOCK_DURATION + TIMESTAMP_BUFFER);
+
+    // @ts-ignore
+    await hodler.connect(user).lock(`lock-1`, userAddress);
+    // @ts-ignore
+    await hodler.connect(user).unlock(`lock-1`, userAddress);
+
+    // @ts-ignore
+    await hodler.connect(user).stake(userAddress, 42n);
+    // @ts-ignore
+    await hodler.connect(user).unstake(userAddress, 42n);
+
+    // @ts-ignore
+    let oldVaults = await hodler.connect(user).getVaults(userAddress);
+    expect(oldVaults.length).to.equal(4);
+
+    // @ts-ignore
+    await hodler.connect(user).openExpired();
+
+    // @ts-ignore
+    let newVaults = await hodler.connect(user).getVaults(userAddress);
+    expect(newVaults.length).to.equal(2);
+    expect(newVaults[0].amount).to.equal(LOCK_SIZE);
+    expect(newVaults[1].amount).to.equal(42n);
+
+    const hodlerData = await hodler.hodlers(userAddress);
+    expect(hodlerData.available).to.equal(LOCK_SIZE + 1n);
   });
 });

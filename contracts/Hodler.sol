@@ -25,7 +25,6 @@ contract Hodler is
     UUPSUpgradeable,
     ReentrancyGuardUpgradeable
 {
-    using SafeMath for uint256;
     using Strings for address;
     using SafeMath for uint256;
     using EnumerableMap for EnumerableMap.AddressToUintMap;
@@ -51,10 +50,7 @@ contract Hodler is
     uint256 private constant WEEK = 7 * DAY;
     uint256 private constant MONTH = 30 * DAY;
     
-    // Minimum buffer to prevent miner manipulation by ensuring that the timestamp
-    // used in the contract is not too close to the current block time, which could
-    // be influenced by miners to gain an advantage.
-    uint256 private constant TIMESTAMP_BUFFER = 15 * MINUTE;
+    uint256 private constant TIMESTAMP_BUFFER = 1 * HOUR;
 
     struct VaultData {
         uint256 amount;
@@ -222,7 +218,7 @@ contract Hodler is
                 }
             } else {
                 if (safeIndex != i) {
-                    hodlers[_msgSender()].locks[safeIndex] = hodlers[_msgSender()].locks[i];
+                    hodlers[_msgSender()].stakes[safeIndex] = hodlers[_msgSender()].stakes[i];
                 }
                 safeIndex++;
             }
@@ -230,8 +226,8 @@ contract Hodler is
 
         require(didUnstake == true, "No stake found for the operator address");
 
-        while (hodlers[_msgSender()].locks.length > safeIndex) {
-            hodlers[_msgSender()].locks.pop();
+        while (hodlers[_msgSender()].stakes.length > safeIndex) {
+            hodlers[_msgSender()].stakes.pop();
         }
 
         emit Unstaked(_msgSender(), _address, _amount);
@@ -304,13 +300,23 @@ contract Hodler is
 
     function openExpired() external whenNotPaused nonReentrant {
         uint256 bufferedTimestamp = block.timestamp.sub(TIMESTAMP_BUFFER);
+        uint256 safeIndex = 0;
         uint256 claimed = 0;
         for (uint256 i = 0; i < hodlers[_msgSender()].vaults.length; i++) {
             if (hodlers[_msgSender()].vaults[i].availableAt < bufferedTimestamp) {
                 claimed = claimed.add(hodlers[_msgSender()].vaults[i].amount);
-                delete hodlers[_msgSender()].vaults[i];
+            } else {
+                if (safeIndex != i) {
+                    hodlers[_msgSender()].vaults[safeIndex] = hodlers[_msgSender()].vaults[i];
+                }
+                safeIndex++;
             }
         }
+
+        while (hodlers[_msgSender()].vaults.length > safeIndex) {
+            hodlers[_msgSender()].vaults.pop();
+        }
+
         hodlers[_msgSender()].available = hodlers[_msgSender()].available.add(claimed);
     }
 

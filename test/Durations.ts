@@ -15,7 +15,7 @@ describe("Hodler Duration Management", function () {
   const HOUR = 60 * MINUTE;
   const DAY = 24 * HOUR;
   const WEEK = 7 * DAY;
-  const TIMESTAMP_BUFFER = 15 * MINUTE;
+  const TIMESTAMP_BUFFER = 1 * HOUR;
 
   const INITIAL_LOCK_SIZE = ethers.parseEther("100");
   const INITIAL_LOCK_DURATION = DAY * 2;

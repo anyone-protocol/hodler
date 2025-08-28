@@ -15,6 +15,7 @@ describe("Hodler Contract - Lock/Unlock Tests", function () {
   const LOCK_DURATION = 186400;
   const STAKE_DURATION = 286400;
   const GOVERNANCE_DURATION = 386400;
+  const TIMESTAMP_BUFFER = 60 * 60; // 1 hour buffer
 
   beforeEach(async function () {
     [owner, user, rewardsPool, controller] = await ethers.getSigners();
@@ -72,7 +73,7 @@ describe("Hodler Contract - Lock/Unlock Tests", function () {
       await hodler.connect(user).lock("fingerprint1", user.address);
       // @ts-ignore
       await hodler.connect(user).unlock("fingerprint1", user.address);
-      await network.provider.send('evm_increaseTime', [LOCK_DURATION + 1000]);
+      await network.provider.send('evm_increaseTime', [LOCK_DURATION + TIMESTAMP_BUFFER]);
       await network.provider.send("evm_mine");
       // @ts-ignore
       await hodler.connect(user).openExpired();

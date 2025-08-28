@@ -115,13 +115,23 @@ describe("Hodler Stake/Unstake Tests", function () {
       expect(stake).to.equal(0);
     });
 
-    it("Should fail unstaking with insufficient stake", async function () {
+    it("Should fail unstaking with no stake found", async function () {
       // @ts-ignore
-      await hodler.connect(user).unstake(operator.address, STAKE_AMOUNT); // First unstake
+      await hodler.connect(user).unstake(operator.address, STAKE_AMOUNT); // Unstake all
 
       await expect(
         // @ts-ignore
-        hodler.connect(user).unstake(operator.address, 1)
+        hodler.connect(user).unstake(operator.address, 1) // Try unstaking more
+      ).to.be.revertedWith("No stake found for the operator address");
+    });
+
+    it("Should fail unstaking with insufficient stake", async function () {
+      // @ts-ignore
+      await hodler.connect(user).unstake(operator.address, STAKE_AMOUNT / 2n); // Unstake half
+
+      await expect(
+        // @ts-ignore
+        hodler.connect(user).unstake(operator.address, STAKE_AMOUNT) // Try unstaking more
       ).to.be.revertedWith("Insufficient stake");
     });
 

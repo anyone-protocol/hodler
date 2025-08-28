@@ -14,7 +14,7 @@ describe("Hodler Initialization Tests", function () {
   const MINUTE = 60;
   const HOUR = 60 * MINUTE;
   const DAY = 24 * HOUR;
-  const TIMESTAMP_BUFFER = 15 * MINUTE;
+  const TIMESTAMP_BUFFER = 1 * HOUR;
 
   const LOCK_SIZE = ethers.parseEther("100");
   const LOCK_DURATION = TIMESTAMP_BUFFER + DAY + 1;
