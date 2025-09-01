@@ -18,6 +18,7 @@ describe("Hodler Initialization Tests", function () {
 
   const LOCK_SIZE = ethers.parseEther("100");
   const LOCK_DURATION = TIMESTAMP_BUFFER + DAY + 1;
+  const MIN_STAKE_SIZE = ethers.parseEther("1");
   const STAKE_DURATION = TIMESTAMP_BUFFER + DAY + 1;
   const GOVERNANCE_DURATION = TIMESTAMP_BUFFER + DAY + 1;
 
@@ -33,6 +34,7 @@ describe("Hodler Initialization Tests", function () {
       controller.address,
       LOCK_SIZE,
       LOCK_DURATION,
+      MIN_STAKE_SIZE,
       STAKE_DURATION,
       GOVERNANCE_DURATION,
       rewardsPool.address
@@ -46,6 +48,7 @@ describe("Hodler Initialization Tests", function () {
       expect(await hodler.controllerAddress()).to.equal(controller.address);
       expect(await hodler.LOCK_SIZE()).to.equal(LOCK_SIZE);
       expect(await hodler.LOCK_DURATION()).to.equal(LOCK_DURATION);
+      expect(await hodler.MIN_STAKE_SIZE()).to.equal(MIN_STAKE_SIZE);
       expect(await hodler.STAKE_DURATION()).to.equal(STAKE_DURATION);
       expect(await hodler.GOVERNANCE_DURATION()).to.equal(GOVERNANCE_DURATION);
       expect(await hodler.rewardsPoolAddress()).to.equal(rewardsPool.address);
@@ -59,11 +62,28 @@ describe("Hodler Initialization Tests", function () {
           controller.address,
           0, // zero lock size
           LOCK_DURATION,
+          MIN_STAKE_SIZE,
           STAKE_DURATION,
           GOVERNANCE_DURATION,
           rewardsPool.address
         ])
       ).to.be.revertedWith("Lock size must be greater than 0");
+    });
+
+    it("Should fail initialization with zero min stake size", async function () {
+      const Hodler = await ethers.getContractFactory("Hodler");
+      await expect(
+        upgrades.deployProxy(Hodler, [
+          await token.getAddress(),
+          controller.address,
+          LOCK_SIZE,
+          LOCK_DURATION,
+          0, // zero min stake size
+          STAKE_DURATION,
+          GOVERNANCE_DURATION,
+          rewardsPool.address
+        ])
+      ).to.be.revertedWith("Minimum stake size must be greater than 0");
     });
 
     it("Should fail initialization with invalid durations", async function () {
@@ -77,6 +97,7 @@ describe("Hodler Initialization Tests", function () {
           controller.address,
           LOCK_SIZE,
           invalidDuration,
+          MIN_STAKE_SIZE,
           STAKE_DURATION,
           GOVERNANCE_DURATION,
           rewardsPool.address
@@ -90,6 +111,7 @@ describe("Hodler Initialization Tests", function () {
           controller.address,
           LOCK_SIZE,
           LOCK_DURATION,
+          MIN_STAKE_SIZE,
           invalidDuration,
           GOVERNANCE_DURATION,
           rewardsPool.address
@@ -103,6 +125,7 @@ describe("Hodler Initialization Tests", function () {
           controller.address,
           LOCK_SIZE,
           LOCK_DURATION,
+          MIN_STAKE_SIZE,
           STAKE_DURATION,
           invalidDuration,
           rewardsPool.address
@@ -129,6 +152,7 @@ describe("Hodler Initialization Tests", function () {
           controller.address,
           LOCK_SIZE,
           LOCK_DURATION,
+          MIN_STAKE_SIZE,
           STAKE_DURATION,
           GOVERNANCE_DURATION,
           rewardsPool.address

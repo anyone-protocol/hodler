@@ -42,7 +42,8 @@ contract Hodler is
     address public rewardsPoolAddress;
 
     uint256 public LOCK_SIZE;
-    uint64 public LOCK_DURATION; 
+    uint64 public LOCK_DURATION;
+    uint256 public MIN_STAKE_SIZE;
     uint64 public STAKE_DURATION;
     uint64 public GOVERNANCE_DURATION;
 
@@ -105,6 +106,7 @@ contract Hodler is
     
     event LockSizeUpdated(address indexed controller, uint256 oldValue, uint256 newValue);
     event LockDurationUpdated(address indexed controller, uint256 oldValue, uint256 newValue);
+    event MinStakeSizeUpdated(address indexed controller, uint256 oldValue, uint256 newValue);
     event StakeDurationUpdated(address indexed controller, uint256 oldValue, uint256 newValue);
     event GovernanceDurationUpdated(address indexed controller, uint256 oldValue, uint256 newValue);
 
@@ -433,6 +435,13 @@ contract Hodler is
         emit LockDurationUpdated(controllerAddress, oldValue, _seconds);
     }
 
+    function setMinStakeSize(uint256 _size) external onlyRole(CONTROLLER_ROLE) nonReentrant {
+        require(_size > 0, "Minimum stake size must be greater than 0");
+        uint256 oldValue = MIN_STAKE_SIZE;
+        MIN_STAKE_SIZE = _size;
+        emit MinStakeSizeUpdated(controllerAddress, oldValue, _size);
+    }
+
     function setStakeDuration(uint64 _seconds) external onlyRole(CONTROLLER_ROLE) nonReentrant {
         require(isValidDuration(_seconds), "Invalid duration for staking");
         uint256 oldValue = STAKE_DURATION;
@@ -457,12 +466,14 @@ contract Hodler is
         address payable _controller,
         uint256 _lockSize,
         uint64 _lockDuration,
+        uint256 _minStakeSize,
         uint64 _stakeDuration,
         uint64 _governanceDuration,
         address _rewardsPoolAddress
     ) initializer public {        
         require(_lockSize > 0, "Lock size must be greater than 0");
         require(isValidDuration(_lockDuration), "Invalid duration for locking");
+        require(_minStakeSize > 0, "Minimum stake size must be greater than 0");
         require(isValidDuration(_stakeDuration), "Invalid duration for staking");
         require(isValidDuration(_governanceDuration), "Invalid duration for governance");
 
@@ -476,6 +487,7 @@ contract Hodler is
 
         LOCK_SIZE = _lockSize;
         LOCK_DURATION = _lockDuration;
+        MIN_STAKE_SIZE = _minStakeSize;
         STAKE_DURATION = _stakeDuration;
         GOVERNANCE_DURATION = _governanceDuration;
         

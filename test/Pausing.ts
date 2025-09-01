@@ -14,6 +14,7 @@ describe("Hodler Contract Pause Tests", function () {
   const PAUSER_ROLE = ethers.keccak256(ethers.toUtf8Bytes("PAUSER_ROLE"));
   const LOCK_SIZE = ethers.parseEther("100");
   const ONE_DAY = 24 * 60 * 60;
+  const MIN_STAKE_SIZE = ethers.parseEther("1");
   const LOCK_DURATION = ONE_DAY * 7;
   const STAKE_DURATION = ONE_DAY * 14;
   const GOVERNANCE_DURATION = ONE_DAY * 30;
@@ -33,6 +34,7 @@ describe("Hodler Contract Pause Tests", function () {
       controller.address,
       LOCK_SIZE,
       LOCK_DURATION,
+      MIN_STAKE_SIZE,
       STAKE_DURATION,
       GOVERNANCE_DURATION,
       rewardsPool.address

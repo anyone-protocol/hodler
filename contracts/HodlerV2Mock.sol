@@ -24,6 +24,7 @@ contract HodlerV2Mock is
 
     uint256 public LOCK_SIZE;
     uint64 public LOCK_DURATION; 
+    uint256 public MIN_STAKE_SIZE;
     uint64 public STAKE_DURATION;
     uint64 public GOVERNANCE_DURATION;
 
@@ -96,6 +97,7 @@ contract HodlerV2Mock is
         address _rewardsPoolAddress,
         uint256 _lockSize,
         uint64 _lockDuration,
+        uint256 _minStakeSize,
         uint64 _stakeDuration,
         uint64 _governanceDuration
     ) public initializer {
@@ -109,6 +111,7 @@ contract HodlerV2Mock is
         rewardsPoolAddress = _rewardsPoolAddress;
         LOCK_SIZE = _lockSize;
         LOCK_DURATION = _lockDuration;
+        MIN_STAKE_SIZE = _minStakeSize;
         STAKE_DURATION = _stakeDuration;
         GOVERNANCE_DURATION = _governanceDuration;
         

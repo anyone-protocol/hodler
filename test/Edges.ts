@@ -20,6 +20,7 @@ describe("Hodler Edge Cases", function () {
 
   const INITIAL_LOCK_SIZE = ethers.parseEther("100");
   const INITIAL_LOCK_DURATION = DAY * 2;
+  const MIN_STAKE_SIZE = ethers.parseEther("1");
   const INITIAL_STAKE_DURATION = WEEK;
   const INITIAL_GOVERNANCE_DURATION = WEEK * 2;
 
@@ -35,6 +36,7 @@ describe("Hodler Edge Cases", function () {
       controller.address,
       INITIAL_LOCK_SIZE,
       INITIAL_LOCK_DURATION,
+      MIN_STAKE_SIZE,
       INITIAL_STAKE_DURATION,
       INITIAL_GOVERNANCE_DURATION,
       rewardsPool.address

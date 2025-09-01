@@ -18,6 +18,7 @@ describe("Hodler Upgrade Tests", function () {
   const INITIAL_PARAMS = {
     lockSize: ethers.parseEther("100"),
     lockDuration: 2 * 24 * 60 * 60, // 2 days
+    minStakeSize: ethers.parseEther("1"),
     stakeDuration: 7 * 24 * 60 * 60, // 1 week
     governanceDuration: 30 * 24 * 60 * 60 // 30 days
   };
@@ -34,6 +35,7 @@ describe("Hodler Upgrade Tests", function () {
       controller.address,
       INITIAL_PARAMS.lockSize,
       INITIAL_PARAMS.lockDuration,
+      INITIAL_PARAMS.minStakeSize,
       INITIAL_PARAMS.stakeDuration,
       INITIAL_PARAMS.governanceDuration,
       rewardsPool.address

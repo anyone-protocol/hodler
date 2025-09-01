@@ -44,12 +44,18 @@ async function main() {
 
   const lockSize = '100'
   const lockDuration = 60 * 60 * 24 * 30 // 30 days
+  const minStakeSize = '1'
   const stakeDuration = 60 * 60 * 24 * 7 // 7 days
   const governanceDuration = 60 * 60 * 24 * 30 // 30 days
   
   const instance = await upgrades.deployProxy(
     Contract,
-    [ anyoneAddress, operatorAddress, ethers.parseEther(lockSize), lockDuration, stakeDuration, governanceDuration, rewardsPoolAddress ]
+    [ anyoneAddress, operatorAddress, 
+      ethers.parseEther(lockSize), lockDuration, 
+      ethers.parseEther(minStakeSize), stakeDuration, 
+      governanceDuration, 
+      rewardsPoolAddress 
+    ]
   )
   await instance.waitForDeployment()
   const proxyContractAddress = await instance.getAddress()

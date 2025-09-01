@@ -15,6 +15,7 @@ describe("Hodler Voting Tests", function () {
   const LOCK_SIZE = ethers.parseEther("100");
   const ONE_DAY = 24 * 60 * 60;
   const LOCK_DURATION = ONE_DAY * 7;
+  const MIN_STAKE_SIZE = ethers.parseEther("1");
   const STAKE_DURATION = ONE_DAY * 14;
   const GOVERNANCE_DURATION = ONE_DAY * 30;
 
@@ -32,6 +33,7 @@ describe("Hodler Voting Tests", function () {
       controller.address,
       LOCK_SIZE,
       LOCK_DURATION,
+      MIN_STAKE_SIZE,
       STAKE_DURATION,
       GOVERNANCE_DURATION,
       rewardsPool.address

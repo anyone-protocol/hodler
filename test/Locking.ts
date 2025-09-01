@@ -13,6 +13,7 @@ describe("Hodler Contract - Lock/Unlock Tests", function () {
 
   const LOCK_SIZE = ethers.parseEther("100");
   const LOCK_DURATION = 186400;
+  const MIN_STAKE_SIZE = ethers.parseEther("1");
   const STAKE_DURATION = 286400;
   const GOVERNANCE_DURATION = 386400;
   const TIMESTAMP_BUFFER = 60 * 60; // 1 hour buffer
@@ -29,6 +30,7 @@ describe("Hodler Contract - Lock/Unlock Tests", function () {
       controller.address,
       LOCK_SIZE,
       LOCK_DURATION,
+      MIN_STAKE_SIZE,
       STAKE_DURATION,
       GOVERNANCE_DURATION,
       rewardsPool.address

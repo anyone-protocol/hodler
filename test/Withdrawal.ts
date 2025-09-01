@@ -17,6 +17,7 @@ describe("Hodler Withdrawal Tests", function () {
   
   const LOCK_SIZE = ethers.parseEther("100");
   const LOCK_DURATION = 7 * DAY;
+  const MIN_STAKE_SIZE = ethers.parseEther("1");
   const STAKE_DURATION = 2 * DAY;
   const GOVERNANCE_DURATION = 30 * DAY;
   const INITIAL_BALANCE = ethers.parseEther("1000")
@@ -33,6 +34,7 @@ describe("Hodler Withdrawal Tests", function () {
       await controller.getAddress(),
       LOCK_SIZE,
       LOCK_DURATION,
+      MIN_STAKE_SIZE,
       STAKE_DURATION,
       GOVERNANCE_DURATION,
       await rewardsPool.getAddress()

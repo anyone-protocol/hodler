@@ -14,6 +14,7 @@ describe("Hodler Stake/Unstake Tests", function () {
 
   const LOCK_SIZE = ethers.parseEther("100");
   const LOCK_DURATION = 186400;
+  const MIN_STAKE_SIZE = ethers.parseEther("1");
   const STAKE_DURATION = 286400;
   const GOVERNANCE_DURATION = 386400;
   const STAKE_AMOUNT = 123n;
@@ -30,6 +31,7 @@ describe("Hodler Stake/Unstake Tests", function () {
       controller.address,
       LOCK_SIZE,
       LOCK_DURATION,
+      MIN_STAKE_SIZE,
       STAKE_DURATION,
       GOVERNANCE_DURATION,
       rewardsPool.address
