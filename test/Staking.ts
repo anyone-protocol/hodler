@@ -18,6 +18,7 @@ describe("Hodler Stake/Unstake Tests", function () {
   const STAKE_DURATION = 286400;
   const GOVERNANCE_DURATION = 386400;
   const STAKE_AMOUNT = 123n;
+  const DEFAULT_REDEEM_COST = ethers.parseEther("0.0001");
 
   beforeEach(async function () {
     [owner, user, operator, rewardsPool, controller] = await ethers.getSigners();
@@ -34,7 +35,8 @@ describe("Hodler Stake/Unstake Tests", function () {
       MIN_STAKE_SIZE,
       STAKE_DURATION,
       GOVERNANCE_DURATION,
-      rewardsPool.address
+      rewardsPool.address,
+      DEFAULT_REDEEM_COST
     ]);
     await hodler.waitForDeployment();
 

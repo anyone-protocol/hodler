@@ -18,6 +18,7 @@ describe("Hodler Contract Pause Tests", function () {
   const LOCK_DURATION = ONE_DAY * 7;
   const STAKE_DURATION = ONE_DAY * 14;
   const GOVERNANCE_DURATION = ONE_DAY * 30;
+  const DEFAULT_REDEEM_COST = ethers.parseEther("0.0001");
 
   beforeEach(async function () {
     [owner, controller, rewardsPool, user] = await ethers.getSigners();
@@ -37,7 +38,8 @@ describe("Hodler Contract Pause Tests", function () {
       MIN_STAKE_SIZE,
       STAKE_DURATION,
       GOVERNANCE_DURATION,
-      rewardsPool.address
+      rewardsPool.address,
+      DEFAULT_REDEEM_COST
     ]);
     await hodler.waitForDeployment();
   });

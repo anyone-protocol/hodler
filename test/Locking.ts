@@ -17,6 +17,7 @@ describe("Hodler Contract - Lock/Unlock Tests", function () {
   const STAKE_DURATION = 286400;
   const GOVERNANCE_DURATION = 386400;
   const TIMESTAMP_BUFFER = 60 * 60; // 1 hour buffer
+  const DEFAULT_REDEEM_COST = ethers.parseEther("0.0001");
 
   beforeEach(async function () {
     [owner, user, rewardsPool, controller] = await ethers.getSigners();
@@ -33,7 +34,8 @@ describe("Hodler Contract - Lock/Unlock Tests", function () {
       MIN_STAKE_SIZE,
       STAKE_DURATION,
       GOVERNANCE_DURATION,
-      rewardsPool.address
+      rewardsPool.address,
+      DEFAULT_REDEEM_COST
     ]);
     await hodler.waitForDeployment();
 

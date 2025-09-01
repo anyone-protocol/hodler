@@ -46,6 +46,7 @@ contract Hodler is
     uint256 public MIN_STAKE_SIZE;
     uint64 public STAKE_DURATION;
     uint64 public GOVERNANCE_DURATION;
+    uint256 public DEFAULT_REDEEM_COST;
 
     uint64 private constant MINUTE = 60;
     uint64 private constant HOUR = 60 * MINUTE;
@@ -109,14 +110,17 @@ contract Hodler is
     event MinStakeSizeUpdated(address indexed controller, uint256 oldValue, uint256 newValue);
     event StakeDurationUpdated(address indexed controller, uint256 oldValue, uint256 newValue);
     event GovernanceDurationUpdated(address indexed controller, uint256 oldValue, uint256 newValue);
+    event DefaultRedeemCostUpdated(address indexed controllerAddress, uint256 oldValue, uint256 newValue);
 
     event HodlerInitialized(
         address tokenAddress,
         address controller,
         uint256 lockSize,
         uint64 lockDuration,
+        uint256 minStakeSize,
         uint64 stakeDuration,
-        uint64 governanceDuration
+        uint64 governanceDuration,
+        uint256 defaultRedeemCost
     );
 
     function lock(string calldata fingerprint, address _operator) external whenNotPaused nonReentrant {
@@ -274,21 +278,14 @@ contract Hodler is
             hodlers[_msgSender()].isSet = true;
         }
 
-        uint256 gasTest = gasleft();
-        hodlers[_msgSender()].gas = hodlers[_msgSender()].gas.sub(0);
-        hodlers[_msgSender()].available = hodlers[_msgSender()].available.add(0);
-        require(hodlers[_msgSender()].gas >= 0, "Insufficient gas budget for hodler account");
-        
-        uint256 gasEstimate = gasTest.sub(gasleft()).mul(3);
-
         require(
-            hodlers[_msgSender()].gas.add(msg.value) > gasEstimate,
+            hodlers[_msgSender()].gas.add(msg.value) > DEFAULT_REDEEM_COST,
             "Not enough gas budget for updating the hodler account"
         );
 
         hodlers[_msgSender()].gas = hodlers[_msgSender()].gas.add(msg.value);
         
-        emit UpdateRewards(_msgSender(), gasEstimate, false);
+        emit UpdateRewards(_msgSender(), DEFAULT_REDEEM_COST, false);
                 
         (bool sent, ) = controllerAddress.call{value: msg.value}("");
         require(sent, "Failed to send ETH to controller");
@@ -297,19 +294,12 @@ contract Hodler is
     function redeem() external whenNotPaused nonReentrant {
         require(hodlers[_msgSender()].isSet, "Hodler account not found");
 
-        uint256 gasTest = gasleft();
-        hodlers[_msgSender()].gas = hodlers[_msgSender()].gas.sub(0);
-        hodlers[_msgSender()].available = hodlers[_msgSender()].available.add(0);
-        require(hodlers[_msgSender()].gas >= 0, "Insufficient gas budget for hodler account");
-        
-        uint256 gasEstimate = gasTest.sub(gasleft()).mul(3);
-
         require(
-            hodlers[_msgSender()].gas > gasEstimate,
+            hodlers[_msgSender()].gas > DEFAULT_REDEEM_COST,
             "Not enough gas budget for updating the hodler account"
         );
 
-        emit UpdateRewards(_msgSender(), gasEstimate, true);
+        emit UpdateRewards(_msgSender(), DEFAULT_REDEEM_COST, true);
     }
 
     function openExpired() external whenNotPaused nonReentrant {
@@ -456,6 +446,13 @@ contract Hodler is
         emit GovernanceDurationUpdated(controllerAddress, oldValue, _seconds);
     }
 
+    function setDefaultRedeemCost(uint256 _amount) external onlyRole(CONTROLLER_ROLE) nonReentrant {
+        require(_amount > 0, "Default redeem cost amount must be greater than 0");
+        uint256 oldValue = DEFAULT_REDEEM_COST;
+        DEFAULT_REDEEM_COST = _amount;
+        emit DefaultRedeemCostUpdated(controllerAddress, oldValue, _amount);
+    }
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -469,13 +466,15 @@ contract Hodler is
         uint256 _minStakeSize,
         uint64 _stakeDuration,
         uint64 _governanceDuration,
-        address _rewardsPoolAddress
+        address _rewardsPoolAddress,
+        uint256 _defaultRedeemCost
     ) initializer public {        
         require(_lockSize > 0, "Lock size must be greater than 0");
         require(isValidDuration(_lockDuration), "Invalid duration for locking");
         require(_minStakeSize > 0, "Minimum stake size must be greater than 0");
         require(isValidDuration(_stakeDuration), "Invalid duration for staking");
         require(isValidDuration(_governanceDuration), "Invalid duration for governance");
+        require(_defaultRedeemCost > 0, "Default redeem cost amount must be greater than 0");
 
         __AccessControl_init();
         __Pausable_init();
@@ -490,6 +489,7 @@ contract Hodler is
         MIN_STAKE_SIZE = _minStakeSize;
         STAKE_DURATION = _stakeDuration;
         GOVERNANCE_DURATION = _governanceDuration;
+        DEFAULT_REDEEM_COST = _defaultRedeemCost;
         
         rewardsPoolAddress = _rewardsPoolAddress;
 
@@ -497,7 +497,7 @@ contract Hodler is
         _grantRole(PAUSER_ROLE, _msgSender());
         _grantRole(UPGRADER_ROLE, _msgSender());
         _grantRole(CONTROLLER_ROLE, _controller);
-        emit HodlerInitialized(_tokenAddress, _controller, _lockSize, _lockDuration, _stakeDuration, _governanceDuration);
+        emit HodlerInitialized(_tokenAddress, _controller, _lockSize, _lockDuration, _minStakeSize, _stakeDuration, _governanceDuration, _defaultRedeemCost);
     }
 
     function pause() public onlyRole(PAUSER_ROLE) {

@@ -21,6 +21,7 @@ describe("Hodler Initialization Tests", function () {
   const MIN_STAKE_SIZE = ethers.parseEther("1");
   const STAKE_DURATION = TIMESTAMP_BUFFER + DAY + 1;
   const GOVERNANCE_DURATION = TIMESTAMP_BUFFER + DAY + 1;
+  const DEFAULT_REDEEM_COST = ethers.parseEther("0.0001");
 
   beforeEach(async function () {
     [owner, controller, rewardsPool, addr1] = await ethers.getSigners();
@@ -37,7 +38,8 @@ describe("Hodler Initialization Tests", function () {
       MIN_STAKE_SIZE,
       STAKE_DURATION,
       GOVERNANCE_DURATION,
-      rewardsPool.address
+      rewardsPool.address,
+      DEFAULT_REDEEM_COST
     ]);
     await hodler.waitForDeployment();
   });
@@ -52,6 +54,7 @@ describe("Hodler Initialization Tests", function () {
       expect(await hodler.STAKE_DURATION()).to.equal(STAKE_DURATION);
       expect(await hodler.GOVERNANCE_DURATION()).to.equal(GOVERNANCE_DURATION);
       expect(await hodler.rewardsPoolAddress()).to.equal(rewardsPool.address);
+      expect(await hodler.DEFAULT_REDEEM_COST()).to.equal(DEFAULT_REDEEM_COST);
     });
 
     it("Should fail initialization with zero lock size", async function () {
@@ -65,7 +68,8 @@ describe("Hodler Initialization Tests", function () {
           MIN_STAKE_SIZE,
           STAKE_DURATION,
           GOVERNANCE_DURATION,
-          rewardsPool.address
+          rewardsPool.address,
+          DEFAULT_REDEEM_COST
         ])
       ).to.be.revertedWith("Lock size must be greater than 0");
     });
@@ -81,7 +85,8 @@ describe("Hodler Initialization Tests", function () {
           0, // zero min stake size
           STAKE_DURATION,
           GOVERNANCE_DURATION,
-          rewardsPool.address
+          rewardsPool.address,
+          DEFAULT_REDEEM_COST
         ])
       ).to.be.revertedWith("Minimum stake size must be greater than 0");
     });
@@ -100,7 +105,8 @@ describe("Hodler Initialization Tests", function () {
           MIN_STAKE_SIZE,
           STAKE_DURATION,
           GOVERNANCE_DURATION,
-          rewardsPool.address
+          rewardsPool.address,
+          DEFAULT_REDEEM_COST
         ])
       ).to.be.revertedWith("Invalid duration for locking");
 
@@ -114,7 +120,8 @@ describe("Hodler Initialization Tests", function () {
           MIN_STAKE_SIZE,
           invalidDuration,
           GOVERNANCE_DURATION,
-          rewardsPool.address
+          rewardsPool.address,
+          DEFAULT_REDEEM_COST
         ])
       ).to.be.revertedWith("Invalid duration for staking");
 
@@ -128,7 +135,8 @@ describe("Hodler Initialization Tests", function () {
           MIN_STAKE_SIZE,
           STAKE_DURATION,
           invalidDuration,
-          rewardsPool.address
+          rewardsPool.address,
+          DEFAULT_REDEEM_COST
         ])
       ).to.be.revertedWith("Invalid duration for governance");
     });
@@ -155,7 +163,8 @@ describe("Hodler Initialization Tests", function () {
           MIN_STAKE_SIZE,
           STAKE_DURATION,
           GOVERNANCE_DURATION,
-          rewardsPool.address
+          rewardsPool.address,
+          DEFAULT_REDEEM_COST
         )
       ).to.be.revertedWith("Initializable: contract is already initialized");
     });

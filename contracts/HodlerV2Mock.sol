@@ -27,6 +27,7 @@ contract HodlerV2Mock is
     uint256 public MIN_STAKE_SIZE;
     uint64 public STAKE_DURATION;
     uint64 public GOVERNANCE_DURATION;
+    uint256 public DEFAULT_REDEEM_COST;
 
     struct VaultData {
         uint256 amount;
@@ -99,7 +100,8 @@ contract HodlerV2Mock is
         uint64 _lockDuration,
         uint256 _minStakeSize,
         uint64 _stakeDuration,
-        uint64 _governanceDuration
+        uint64 _governanceDuration,
+        uint256 _defaultRedeemCost
     ) public initializer {
         __Pausable_init();
         __AccessControl_init();
@@ -114,6 +116,7 @@ contract HodlerV2Mock is
         MIN_STAKE_SIZE = _minStakeSize;
         STAKE_DURATION = _stakeDuration;
         GOVERNANCE_DURATION = _governanceDuration;
+        DEFAULT_REDEEM_COST = _defaultRedeemCost;
         
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }

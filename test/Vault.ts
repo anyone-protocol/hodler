@@ -22,6 +22,7 @@ describe("Hodler Vault Management", function () {
   const MIN_STAKE_SIZE = ethers.parseEther("1");
   const STAKE_DURATION = 2 * DAY;
   const GOVERNANCE_DURATION = 30 * DAY;
+  const DEFAULT_REDEEM_COST = ethers.parseEther("0.0001");
 
   beforeEach(async function () {
     [owner, controller, user, rewardsPool] = await ethers.getSigners();
@@ -38,7 +39,8 @@ describe("Hodler Vault Management", function () {
       MIN_STAKE_SIZE,
       STAKE_DURATION,
       GOVERNANCE_DURATION,
-      await rewardsPool.getAddress()
+      await rewardsPool.getAddress(),
+      DEFAULT_REDEEM_COST
     ]);
     await hodler.waitForDeployment();
 

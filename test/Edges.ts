@@ -23,6 +23,7 @@ describe("Hodler Edge Cases", function () {
   const MIN_STAKE_SIZE = ethers.parseEther("1");
   const INITIAL_STAKE_DURATION = WEEK;
   const INITIAL_GOVERNANCE_DURATION = WEEK * 2;
+  const DEFAULT_REDEEM_COST = ethers.parseEther("0.0001");
 
   beforeEach(async function () {
     [owner, controller, rewardsPool, ...users] = await ethers.getSigners();
@@ -39,7 +40,8 @@ describe("Hodler Edge Cases", function () {
       MIN_STAKE_SIZE,
       INITIAL_STAKE_DURATION,
       INITIAL_GOVERNANCE_DURATION,
-      rewardsPool.address
+      rewardsPool.address,
+      DEFAULT_REDEEM_COST
     ]);
     await hodler.waitForDeployment();
 

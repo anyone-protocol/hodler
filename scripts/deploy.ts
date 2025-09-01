@@ -47,6 +47,7 @@ async function main() {
   const minStakeSize = '1'
   const stakeDuration = 60 * 60 * 24 * 7 // 7 days
   const governanceDuration = 60 * 60 * 24 * 30 // 30 days
+  const defaultRedeemCost = '0.0001';
   
   const instance = await upgrades.deployProxy(
     Contract,
@@ -54,7 +55,8 @@ async function main() {
       ethers.parseEther(lockSize), lockDuration, 
       ethers.parseEther(minStakeSize), stakeDuration, 
       governanceDuration, 
-      rewardsPoolAddress 
+      rewardsPoolAddress,
+      ethers.parseEther(defaultRedeemCost)
     ]
   )
   await instance.waitForDeployment()

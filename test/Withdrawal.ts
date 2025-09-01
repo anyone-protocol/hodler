@@ -21,6 +21,7 @@ describe("Hodler Withdrawal Tests", function () {
   const STAKE_DURATION = 2 * DAY;
   const GOVERNANCE_DURATION = 30 * DAY;
   const INITIAL_BALANCE = ethers.parseEther("1000")
+  const DEFAULT_REDEEM_COST = ethers.parseEther("0.0001");
 
   beforeEach(async function () {
     [owner, controller, user, rewardsPool] = await ethers.getSigners();
@@ -37,7 +38,8 @@ describe("Hodler Withdrawal Tests", function () {
       MIN_STAKE_SIZE,
       STAKE_DURATION,
       GOVERNANCE_DURATION,
-      await rewardsPool.getAddress()
+      await rewardsPool.getAddress(),
+      DEFAULT_REDEEM_COST
     ]);
     await hodler.waitForDeployment();
 

@@ -18,6 +18,7 @@ describe("Hodler Access Control Tests", function () {
   const MIN_STAKE_SIZE = ethers.parseEther("1");
   const STAKE_DURATION = 286400;
   const GOVERNANCE_DURATION = 386400;
+  const DEFAULT_REDEEM_COST = ethers.parseEther("0.0001");
 
   beforeEach(async function () {
     [owner, controller, pauser, upgrader, unauthorized, rewardsPool] = await ethers.getSigners();
@@ -34,7 +35,8 @@ describe("Hodler Access Control Tests", function () {
       MIN_STAKE_SIZE,
       STAKE_DURATION,
       GOVERNANCE_DURATION,
-      rewardsPool.address
+      rewardsPool.address,
+      DEFAULT_REDEEM_COST,
     ]);
     await hodler.waitForDeployment();
 

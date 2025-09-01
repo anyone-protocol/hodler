@@ -20,7 +20,8 @@ describe("Hodler Upgrade Tests", function () {
     lockDuration: 2 * 24 * 60 * 60, // 2 days
     minStakeSize: ethers.parseEther("1"),
     stakeDuration: 7 * 24 * 60 * 60, // 1 week
-    governanceDuration: 30 * 24 * 60 * 60 // 30 days
+    governanceDuration: 30 * 24 * 60 * 60, // 30 days
+    defaultRedeemCost: ethers.parseEther("0.0001")
   };
 
   beforeEach(async function () {
@@ -38,7 +39,8 @@ describe("Hodler Upgrade Tests", function () {
       INITIAL_PARAMS.minStakeSize,
       INITIAL_PARAMS.stakeDuration,
       INITIAL_PARAMS.governanceDuration,
-      rewardsPool.address
+      rewardsPool.address,
+      INITIAL_PARAMS.defaultRedeemCost
     ], { kind: "uups" });
     await hodler.waitForDeployment();
   });
