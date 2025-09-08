@@ -1,4 +1,4 @@
-job "hodler-stage-sepolia" {
+job "hodler-stage" {
     datacenters = ["ator-fin"]
     type = "batch"
     namespace = "stage-protocol"
@@ -31,7 +31,7 @@ job "hodler-stage-sepolia" {
 
         template {
             data = <<EOH
-            {{with secret "kv/stage-protocol/hodler-stage-sepolia"}}
+            {{with secret "kv/stage-protocol/hodler-stage"}}
                 HODLER_DEPLOYER_KEY="{{.Data.data.HODLER_DEPLOYER_KEY}}"
                 CONSUL_TOKEN="{{.Data.data.CONSUL_TOKEN}}"
                 JSON_RPC="{{.Data.data.JSON_RPC}}"

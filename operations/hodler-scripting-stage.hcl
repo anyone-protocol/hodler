@@ -1,4 +1,4 @@
-job "hodler-scripting-stage-sepolia" {
+job "hodler-scripting-stage" {
     datacenters = ["ator-fin"]
     type = "batch"
     namespace = "stage-protocol"
@@ -12,7 +12,7 @@ job "hodler-scripting-stage-sepolia" {
         attempts = 0
     }
 
-    task "hodler-stage-sepolia" {
+    task "hodler-stage" {
         driver = "docker"
 
         config {
@@ -31,7 +31,7 @@ job "hodler-scripting-stage-sepolia" {
 
         template {
             data = <<EOH
-            {{with secret "kv/stage-protocol/hodler-stage-sepolia"}}
+            {{with secret "kv/stage-protocol/hodler-stage"}}
                 HODLER_OPERATOR_KEY="{{.Data.data.HODLER_OPERATOR_KEY}}"
                 CONSUL_TOKEN="{{.Data.data.CONSUL_TOKEN}}"
                 JSON_RPC="{{.Data.data.JSON_RPC}}"
