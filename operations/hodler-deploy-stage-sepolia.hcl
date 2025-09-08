@@ -1,6 +1,12 @@
-job "hodler-deploy-stage-sepolia" {
+job "hodler-stage-sepolia" {
     datacenters = ["ator-fin"]
     type = "batch"
+    namespace = "stage-protocol"
+
+    constraint {
+        attribute = "${meta.pool}"
+        value = "stage"
+    }
 
     reschedule {
         attempts = 0
@@ -11,19 +17,21 @@ job "hodler-deploy-stage-sepolia" {
 
         config {
             network_mode = "host"
-            image = "ghcr.io/anyone-protocol/hodler:0.1.5"
+            image = "ghcr.io/anyone-protocol/hodler:0.1.8"
             entrypoint = ["npx"]
             command = "hardhat"
             args = ["run", "--network", "sepolia", "scripts/deploy.ts"]
         }
 
         vault {
-            policies = ["hodler-sepolia-stage"]
+            role = "any1-nomad-workloads-controller"
         }
+
+        consul {}
 
         template {
             data = <<EOH
-            {{with secret "kv/hodler/sepolia/stage"}}
+            {{with secret "kv/stage-protocol/hodler-stage-sepolia"}}
                 HODLER_DEPLOYER_KEY="{{.Data.data.HODLER_DEPLOYER_KEY}}"
                 CONSUL_TOKEN="{{.Data.data.CONSUL_TOKEN}}"
                 JSON_RPC="{{.Data.data.JSON_RPC}}"
