@@ -116,7 +116,7 @@ describe("Hodler Rewards and Gas Management", function () {
       expect(userData.gas).to.equal(oneEth - gasEstimate);
     });
 
-    it("Should allow controller to distribute rewards", async function () {
+    it("Should allow controller to handle claim requests", async function () {
       await user.sendTransaction({
         to: await hodler.getAddress(),
         value: oneEth
@@ -144,6 +144,36 @@ describe("Hodler Rewards and Gas Management", function () {
 
       const userData = await hodler.hodlers(user.address);
       expect(userData.available).to.equal(relayReward + stakeReward);
+    });
+
+    it("Should allow controller to handle redeem requests", async function () {
+      await user.sendTransaction({
+        to: await hodler.getAddress(),
+        value: DEFAULT_REDEEM_COST * 2n
+      });
+
+      const relayReward = ethers.parseEther("10");
+      const stakeReward = ethers.parseEther("5");
+
+      // @ts-ignore
+      await token.connect(owner).transfer(rewardsPool.address, relayReward + stakeReward);
+
+      // @ts-ignore
+      await token.connect(rewardsPool).approve(await hodler.getAddress(), relayReward + stakeReward);
+      
+      // @ts-ignore
+      await expect(hodler.connect(controller).reward(
+        user.address,
+        relayReward,
+        stakeReward,
+        DEFAULT_REDEEM_COST,
+        true
+      ))
+        .to.emit(hodler, "Rewarded")
+        .withArgs(user.address, relayReward + stakeReward, true, relayReward, stakeReward);
+
+      const userData = await token.balanceOf(user.address);
+      expect(userData).to.equal(relayReward + stakeReward);
     });
 
     it("Should fail rewards with insufficient gas budget", async function () {
