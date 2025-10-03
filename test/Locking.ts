@@ -10,6 +10,7 @@ describe("Hodler Contract - Lock/Unlock Tests", function () {
   let user: SignerWithAddress;
   let rewardsPool: SignerWithAddress;
   let controller: SignerWithAddress;
+  let tester: SignerWithAddress;
 
   const LOCK_SIZE = ethers.parseEther("100");
   const LOCK_DURATION = 186400;
@@ -20,7 +21,7 @@ describe("Hodler Contract - Lock/Unlock Tests", function () {
   const DEFAULT_REDEEM_COST = ethers.parseEther("0.0001");
 
   beforeEach(async function () {
-    [owner, user, rewardsPool, controller] = await ethers.getSigners();
+    [owner, user, rewardsPool, controller, tester] = await ethers.getSigners();
 
     const Token = await ethers.getContractFactory("Token");
     token = await Token.deploy(100_000_000n * BigInt(1e18));
@@ -124,6 +125,33 @@ describe("Hodler Contract - Lock/Unlock Tests", function () {
       await hodler.connect(user).lock(fingerprint, user.address);
       // @ts-ignore
       await hodler.connect(user).unlock(fingerprint, user.address);
+
+      // @ts-ignore
+      const vaults = await hodler.connect(user).getVaults(user.address);
+      
+      expect(vaults.length).to.be.above(0);
+      expect(vaults[0].amount).to.equal(LOCK_SIZE);
+      expect(vaults[0].availableAt).to.be.above(0);
+    });
+  });
+
+  describe("Delegated mode of Lock/Unlock Functions", function () {
+    it("Should lock tokens with valid fingerprint", async function () {
+      const fingerprint = "validFingerprint123";
+      // @ts-ignore
+      await hodler.connect(user).lock(fingerprint, tester.address);
+
+      // @ts-ignore
+      const lockAmount = await hodler.connect(user).getLock(fingerprint, tester.address)
+      expect(lockAmount).to.equal(LOCK_SIZE);
+    });
+
+    it("Should create vault entry after unlocking", async function () {
+      const fingerprint = "testFingerprint";
+      // @ts-ignore
+      await hodler.connect(user).lock(fingerprint, tester.address);
+      // @ts-ignore
+      await hodler.connect(user).unlock(fingerprint, tester.address);
 
       // @ts-ignore
       const vaults = await hodler.connect(user).getVaults(user.address);
