@@ -36,11 +36,11 @@ async function main() {
 
   const rewardsPoolAddress = process.env.REWARDS_POOL_ADDRESS || '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266' // HH #1
 
-  console.log(`Deploying Hodler with operator ${operatorAddress}...`)
+  console.log(`Deploying HodlerV3 with operator ${operatorAddress}...`)
   
-  console.log(`Deploying Hodler with deployer ${deployer.address}...`)
+  console.log(`Deploying HodlerV3 with deployer ${deployer.address}...`)
   
-  const Contract = await ethers.getContractFactory('Hodler', deployer)
+  const Contract = await ethers.getContractFactory('HodlerV3', deployer)
 
   const lockSize = '100'
   const lockDuration = 60 * 60 * 24 * 30 // 30 days

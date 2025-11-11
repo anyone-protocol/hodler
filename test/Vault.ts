@@ -4,7 +4,7 @@ import { Contract, Signer } from "ethers";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 import exp from "constants";
 
-describe("Hodler Vault Management", function () {
+describe("HodlerV3 Vault Management", function () {
   let hodler: Contract;
   let token: Contract;
   let owner: Signer;
@@ -30,8 +30,8 @@ describe("Hodler Vault Management", function () {
     const Token = await ethers.getContractFactory("Token");
     token = await Token.deploy(100_000_000n * BigInt(1e18));
     
-    const Hodler = await ethers.getContractFactory("Hodler");
-    hodler = await upgrades.deployProxy(Hodler, [
+    const HodlerV3 = await ethers.getContractFactory("HodlerV3");
+    hodler = await upgrades.deployProxy(HodlerV3, [
       await token.getAddress(),
       await controller.getAddress(),
       LOCK_SIZE,
@@ -84,16 +84,22 @@ describe("Hodler Vault Management", function () {
 
   it("Should only open truly expired vaults", async function () {
     const userAddress = await user.getAddress();
+    // Create first vault with STAKE_DURATION (2 days)
+    // @ts-ignore
+    await hodler.connect(user).stake(userAddress, LOCK_SIZE);
+    // @ts-ignore
+    await hodler.connect(user).unstake(userAddress, LOCK_SIZE);
+    
+    // Wait until first vault expires
+    await time.increase(STAKE_DURATION + TIMESTAMP_BUFFER);
+    
+    // Create second vault with LOCK_DURATION (7 days) - longer duration
     // @ts-ignore
     await hodler.connect(user).lock("lock1", userAddress);
     // @ts-ignore
     await hodler.connect(user).unlock("lock1", userAddress);
-    // @ts-ignore
-    await hodler.connect(user).addVotes(LOCK_SIZE);
-    // @ts-ignore
-    await hodler.connect(user).removeVotes(LOCK_SIZE);
 
-    await time.increase(LOCK_DURATION + TIMESTAMP_BUFFER);
+    // This should only open the first vault (expired), not the second (still locked)
     // @ts-ignore
     await hodler.connect(user).openExpired();
 

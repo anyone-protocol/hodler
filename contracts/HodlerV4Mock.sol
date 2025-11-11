@@ -1,0 +1,124 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.0;
+
+import "../contracts/Hodler.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+
+contract HodlerV4Mock is 
+    Initializable,
+    PausableUpgradeable,
+    AccessControlUpgradeable,
+    UUPSUpgradeable,
+    ReentrancyGuardUpgradeable {
+
+    uint8 public constant VERSION = 4;
+
+    IERC20 public tokenContract;
+    address payable public controllerAddress;
+    address public rewardsPoolAddress;
+
+    uint256 public LOCK_SIZE;
+    uint64 public LOCK_DURATION; 
+    uint256 public MIN_STAKE_SIZE;
+    uint64 public STAKE_DURATION;
+    uint64 public GOVERNANCE_DURATION;
+    uint256 public DEFAULT_REDEEM_COST;
+
+    struct VaultData {
+        uint256 amount;
+        uint64 availableAt;
+        uint8 kind;
+        string data;
+    }
+
+    struct LockData {
+        string fingerprint;
+        address operator;
+        uint256 amount;
+    }
+
+    struct StakeData {
+        address operator;
+        uint256 amount;
+    }
+
+    struct HodlerData {
+        uint256 available;
+        VaultData[] vaults;
+        LockData[] locks;
+        StakeData[] stakes;
+        uint256 votes; // deprecated - no longer used, kept for upgrade compatibility
+        uint256 gas;
+        bool isSet;
+        uint256 claimedRelayRewards;
+        uint256 claimedStakingRewards;
+        bool isVoter;
+    }
+    
+    mapping(address => HodlerData) public hodlers;
+    address[] public hodlerKeys;
+
+    function getLock(string calldata _fingerprint, address _operator) external view returns (uint256) {
+        uint256 fingerprintLength = bytes(_fingerprint).length;
+        require(fingerprintLength > 0, "Fingerprint must have non 0 characters");
+        require(fingerprintLength <= 40, "Fingerprint must have 40 or less characters");
+
+        uint256 lockAmount = 0;
+        bytes32 bytesFingerprint = keccak256(bytes(_fingerprint));
+        for (uint i = 0; i < hodlers[_msgSender()].locks.length; i++) {
+            if (keccak256(bytes(hodlers[_msgSender()].locks[i].fingerprint)) == bytesFingerprint
+                && hodlers[_msgSender()].locks[i].operator == _operator) {
+                lockAmount = lockAmount + hodlers[_msgSender()].locks[i].amount;
+            }
+        }
+
+        return lockAmount;
+    }
+
+    // Add new functionality for V2
+    function newFunction() external pure returns (string memory) {
+        return "V2 Function";
+    }
+
+    function version() external pure returns (uint8) {
+        return VERSION;
+    }
+
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal virtual override {}
+
+    function initialize(
+        address _tokenContract,
+        address payable _controllerAddress,
+        address _rewardsPoolAddress,
+        uint256 _lockSize,
+        uint64 _lockDuration,
+        uint256 _minStakeSize,
+        uint64 _stakeDuration,
+        uint64 _governanceDuration,
+        uint256 _defaultRedeemCost
+    ) public initializer {
+        __Pausable_init();
+        __AccessControl_init();
+        __UUPSUpgradeable_init();
+        __ReentrancyGuard_init();
+        
+        tokenContract = IERC20(_tokenContract);
+        controllerAddress = _controllerAddress;
+        rewardsPoolAddress = _rewardsPoolAddress;
+        LOCK_SIZE = _lockSize;
+        LOCK_DURATION = _lockDuration;
+        MIN_STAKE_SIZE = _minStakeSize;
+        STAKE_DURATION = _stakeDuration;
+        GOVERNANCE_DURATION = _governanceDuration;
+        DEFAULT_REDEEM_COST = _defaultRedeemCost;
+        
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+}

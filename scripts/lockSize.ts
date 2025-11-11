@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import { ethers } from 'hardhat'
 import Consul from 'consul'
-import { abi as hodlerAbi } from '../artifacts/contracts/Hodler.sol/Hodler.json'
+import { abi as hodlerAbi } from '../artifacts/contracts/HodlerV3.sol/HodlerV3.json'
 
 async function main() {
   let consul

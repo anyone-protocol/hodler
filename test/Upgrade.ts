@@ -3,9 +3,11 @@ import { ethers, upgrades } from "hardhat";
 import { Contract, Signer } from "ethers";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
-describe("Hodler Upgrade Tests", function () {
+describe("HodlerV3 Upgrade Tests", function () {
   let hodler: Contract;
   let hodlerV2: Contract;
+  let hodlerV3: Contract;
+  let hodlerV4: Contract;
   let token: Contract;
   let owner: SignerWithAddress;
   let controller: SignerWithAddress;
@@ -43,9 +45,23 @@ describe("Hodler Upgrade Tests", function () {
       INITIAL_PARAMS.defaultRedeemCost
     ], { kind: "uups" });
     await hodler.waitForDeployment();
+
+    const HodlerV3Factory = await ethers.getContractFactory("HodlerV3");
+    hodlerV3 = await upgrades.deployProxy(HodlerV3Factory, [
+      await token.getAddress(),
+      controller.address,
+      INITIAL_PARAMS.lockSize,
+      INITIAL_PARAMS.lockDuration,
+      INITIAL_PARAMS.minStakeSize,
+      INITIAL_PARAMS.stakeDuration,
+      INITIAL_PARAMS.governanceDuration,
+      rewardsPool.address,
+      INITIAL_PARAMS.defaultRedeemCost
+    ], { kind: "uups" });
+    await hodlerV3.waitForDeployment();
   });
 
-  describe("Upgrade Tests", function () {
+  describe("Upgrade 1->2 Tests", function () {
     it("Should allow upgrade to higher version", async function () {
       // Deploy HodlerV2 with higher version
       const HodlerV2Factory = await ethers.getContractFactory("HodlerV2Mock");
@@ -57,14 +73,14 @@ describe("Hodler Upgrade Tests", function () {
 
     it("Should prevent upgrade to same/lower version", async function () {
       // Deploy another instance of V1
-      const HodlerV1Factory = await ethers.getContractFactory("Hodler");
+      const HodlerFactory = await ethers.getContractFactory("Hodler");
       
       await expect(
-        upgrades.upgradeProxy(await hodler.getAddress(), HodlerV1Factory)
+        upgrades.upgradeProxy(await hodler.getAddress(), HodlerFactory)
       ).to.be.revertedWith("New implementation version must be greater than current version");
     });
 
-    it("Should maintain state after upgrade", async function () {
+    it("V2 Should maintain state after upgrade", async function () {
       
       // @ts-ignore
       await token.connect(owner).transfer(user.address, INITIAL_PARAMS.lockSize);
@@ -83,7 +99,7 @@ describe("Hodler Upgrade Tests", function () {
       expect(await hodlerV2.tokenContract()).to.equal(await token.getAddress());
     });
 
-    it("Should verify upgrade authorization", async function () {
+    it("V1 Should verify upgrade authorization", async function () {
       const HodlerV2Factory = await ethers.getContractFactory("HodlerV2Mock");
       
       // Try to upgrade from non-upgrader account
@@ -96,6 +112,114 @@ describe("Hodler Upgrade Tests", function () {
       hodlerV2 = await upgrades.upgradeProxy(await hodler.getAddress(), HodlerV2Factory.connect(user));
       
       expect(await hodlerV2.version()).to.be.equal(2);
+    });
+  });
+
+  describe("Upgrade 1->3 Tests", function () {
+    it("V1 Should allow upgrade to higher version", async function () {
+      // Deploy HodlerV3 with higher version
+      const HodlerV3Factory = await ethers.getContractFactory("HodlerV3");
+      const upgradedHodlerV3 = await upgrades.upgradeProxy(await hodler.getAddress(), HodlerV3Factory);
+      
+      expect(await upgradedHodlerV3.version()).to.be.equal(3);
+      expect(await upgradedHodlerV3.getAddress()).to.equal(await hodler.getAddress());
+    });
+
+    it("V3 Should prevent upgrade to same/lower version", async function () {
+      // Deploy another instance of V3
+      const HodlerV3Factory = await ethers.getContractFactory("HodlerV3");
+      
+      await expect(
+        upgrades.upgradeProxy(await hodlerV3.getAddress(), HodlerV3Factory)
+      ).to.be.revertedWith("New implementation version must be greater than current version");
+    });
+
+    it("V3 Should maintain state after upgrade", async function () {
+      
+      // @ts-ignore
+      await token.connect(owner).transfer(user.address, INITIAL_PARAMS.lockSize);
+      // @ts-ignore
+      await token.connect(user).approve(await hodler.getAddress(), INITIAL_PARAMS.lockSize);
+      // @ts-ignore
+      await hodler.connect(user).lock("testFingerprint", user.address);
+
+      const HodlerV3Factory = await ethers.getContractFactory("HodlerV3");
+      const upgradedHodlerV3 = await upgrades.upgradeProxy(await hodler.getAddress(), HodlerV3Factory);
+
+      // @ts-ignore
+      const lock = await upgradedHodlerV3.connect(user).getLock("testFingerprint", user.address);
+      expect(lock).to.equal(INITIAL_PARAMS.lockSize);
+      expect(await upgradedHodlerV3.LOCK_SIZE()).to.equal(INITIAL_PARAMS.lockSize);
+      expect(await upgradedHodlerV3.tokenContract()).to.equal(await token.getAddress());
+    });
+
+    it("V1 Should verify upgrade authorization", async function () {
+      const HodlerV3Factory = await ethers.getContractFactory("HodlerV3");
+      
+      // Try to upgrade from non-upgrader account
+      await expect(
+        upgrades.upgradeProxy(await hodler.getAddress(), HodlerV3Factory.connect(user))
+      ).to.be.revertedWith(/AccessControl/);
+
+      // Grant upgrader role and try again
+      await hodler.grantRole(UPGRADER_ROLE, user.address);
+      const upgradedHodlerV3 = await upgrades.upgradeProxy(await hodler.getAddress(), HodlerV3Factory.connect(user));
+      
+      expect(await upgradedHodlerV3.version()).to.be.equal(3);
+    });
+  });
+
+  describe("Upgrade 3->4 Tests", function () {
+    it("V3 Should allow upgrade to higher version", async function () {
+      // Deploy HodlerV4 with higher version
+      const HodlerV4Factory = await ethers.getContractFactory("HodlerV4Mock");
+      hodlerV4 = await upgrades.upgradeProxy(await hodlerV3.getAddress(), HodlerV4Factory);
+      
+      expect(await hodlerV4.version()).to.be.equal(4);
+      expect(await hodlerV4.getAddress()).to.equal(await hodlerV3.getAddress());
+    });
+
+    it("V3 Should prevent upgrade to same/lower version", async function () {
+      // Try to upgrade to V3 again (same version)
+      const HodlerV3Factory = await ethers.getContractFactory("HodlerV3");
+      
+      await expect(
+        upgrades.upgradeProxy(await hodlerV3.getAddress(), HodlerV3Factory)
+      ).to.be.revertedWith("New implementation version must be greater than current version");
+    });
+
+    it("V4 Should maintain state after upgrade", async function () {
+      
+      // @ts-ignore
+      await token.connect(owner).transfer(user.address, INITIAL_PARAMS.lockSize);
+      // @ts-ignore
+      await token.connect(user).approve(await hodlerV3.getAddress(), INITIAL_PARAMS.lockSize);
+      // @ts-ignore
+      await hodlerV3.connect(user).lock("testFingerprint", user.address);
+
+      const HodlerV4Factory = await ethers.getContractFactory("HodlerV4Mock");
+      hodlerV4 = await upgrades.upgradeProxy(await hodlerV3.getAddress(), HodlerV4Factory);
+
+      // @ts-ignore
+      const lock = await hodlerV4.connect(user).getLock("testFingerprint", user.address);
+      expect(lock).to.equal(INITIAL_PARAMS.lockSize);
+      expect(await hodlerV4.LOCK_SIZE()).to.equal(INITIAL_PARAMS.lockSize);
+      expect(await hodlerV4.tokenContract()).to.equal(await token.getAddress());
+    });
+
+    it("V3 Should verify upgrade authorization", async function () {
+      const HodlerV4Factory = await ethers.getContractFactory("HodlerV4Mock");
+      
+      // Try to upgrade from non-upgrader account
+      await expect(
+        upgrades.upgradeProxy(await hodlerV3.getAddress(), HodlerV4Factory.connect(user))
+      ).to.be.revertedWith(/AccessControl/);
+
+      // Grant upgrader role and try again
+      await hodlerV3.grantRole(UPGRADER_ROLE, user.address);
+      hodlerV4 = await upgrades.upgradeProxy(await hodlerV3.getAddress(), HodlerV4Factory.connect(user));
+      
+      expect(await hodlerV4.version()).to.be.equal(4);
     });
   });
 });

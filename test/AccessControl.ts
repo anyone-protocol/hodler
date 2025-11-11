@@ -3,7 +3,7 @@ import { ethers, upgrades } from "hardhat";
 import { Contract } from "ethers";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
-describe("Hodler Access Control Tests", function () {
+describe("HodlerV3 Access Control Tests", function () {
   let hodler: Contract;
   let token: Contract;
   let owner: SignerWithAddress;
@@ -26,8 +26,8 @@ describe("Hodler Access Control Tests", function () {
     const Token = await ethers.getContractFactory("Token");
     token = await Token.deploy(100_000_000n * BigInt(1e18));
 
-    const Hodler = await ethers.getContractFactory("Hodler");
-    hodler = await upgrades.deployProxy(Hodler, [
+    const HodlerV3 = await ethers.getContractFactory("HodlerV3");
+    hodler = await upgrades.deployProxy(HodlerV3, [
       await token.getAddress(),
       controller.address,
       LOCK_SIZE,
@@ -91,16 +91,16 @@ describe("Hodler Access Control Tests", function () {
 
   describe("UPGRADER_ROLE permissions", function () {
     it("should allow upgrader to upgrade the contract", async function () {
-      const HodlerV2 = await ethers.getContractFactory("HodlerV2Mock", upgrader);
+      const HodlerV4 = await ethers.getContractFactory("HodlerV4Mock", upgrader);
       
-      await expect(upgrades.upgradeProxy(await hodler.getAddress(), HodlerV2, { kind: "uups" }))
+      await expect(upgrades.upgradeProxy(await hodler.getAddress(), HodlerV4, { kind: "uups" }))
         .to.not.be.reverted;
     });
 
     it("should prevent unauthorized accounts from upgrading", async function () {
-      const HodlerV2 = await ethers.getContractFactory("HodlerV2Mock", unauthorized);
+      const HodlerV4 = await ethers.getContractFactory("HodlerV4Mock", unauthorized);
       
-      await expect(upgrades.upgradeProxy(await hodler.getAddress(), HodlerV2))
+      await expect(upgrades.upgradeProxy(await hodler.getAddress(), HodlerV4))
         .to.be.reverted;
     });
   });

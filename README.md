@@ -1,4 +1,4 @@
-# Hodler Contract - ANyONe Protocol
+# HodlerV3 Contract - ANyONe Protocol
 
 A smart contract implementing token rewards, locking, staking, and governance mechanisms using the UUPS upgradeable pattern with role-based access control.
 Contains tokens vaulted towards a specific protocol pre-defined purpose:
