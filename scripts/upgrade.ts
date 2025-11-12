@@ -40,6 +40,9 @@ async function main() {
   
   const HodlerV3Factory = await ethers.getContractFactory('HodlerV3', upgrader)
 
+  console.log('Importing existing proxy to manifest...')
+  await upgrades.forceImport(proxyAddress, HodlerV3Factory)
+  
   console.log('Performing upgrade...')
   const upgradedProxy = await upgrades.upgradeProxy(proxyAddress, HodlerV3Factory)
   await upgradedProxy.waitForDeployment()

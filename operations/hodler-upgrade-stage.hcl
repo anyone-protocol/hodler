@@ -1,4 +1,4 @@
-job "hodler-upgrade-stage" {
+job "hodler-stage" {
     datacenters = ["ator-fin"]
     type = "batch"
     namespace = "stage-protocol"
@@ -17,7 +17,7 @@ job "hodler-upgrade-stage" {
 
         config {
             network_mode = "host"
-            image = "ghcr.io/anyone-protocol/hodler:0.3.0"
+            image = "ghcr.io/anyone-protocol/hodler:0.3.1"
             entrypoint = ["npx"]
             command = "hardhat"
             args = ["run", "--network", "sepolia", "scripts/upgrade.ts"]
@@ -32,7 +32,7 @@ job "hodler-upgrade-stage" {
         template {
             data = <<EOH
             {{with secret "kv/stage-protocol/hodler-stage"}}
-                HODLER_UPGRADER_KEY="{{.Data.data.HODLER_UPGRADER_KEY}}"
+                HODLER_UPGRADER_KEY="{{.Data.data.HODLER_DEPLOYER_KEY}}"
                 CONSUL_TOKEN="{{.Data.data.CONSUL_TOKEN}}"
                 JSON_RPC="{{.Data.data.JSON_RPC}}"
             {{end}}

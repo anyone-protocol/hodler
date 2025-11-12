@@ -1,4 +1,4 @@
-job "hodler-upgrade-live" {
+job "hodler-live" {
     datacenters = ["ator-fin"]
     type = "batch"
     namespace = "live-protocol"
@@ -17,7 +17,7 @@ job "hodler-upgrade-live" {
 
         config {
             network_mode = "host"
-            image = "ghcr.io/anyone-protocol/hodler:0.3.0"
+            image = "ghcr.io/anyone-protocol/hodler:0.3.1"
             entrypoint = ["npx"]
             command = "hardhat"
             args = ["run", "--network", "sepolia", "scripts/upgrade.ts"]
@@ -32,7 +32,7 @@ job "hodler-upgrade-live" {
         template {
             data = <<EOH
             {{with secret "kv/live-protocol/hodler-live"}}
-                HODLER_UPGRADER_KEY="{{.Data.data.HODLER_UPGRADER_KEY}}"
+                HODLER_UPGRADER_KEY="{{.Data.data.HODLER_DEPLOYER_KEY}}"
                 CONSUL_TOKEN="{{.Data.data.CONSUL_TOKEN}}"
                 JSON_RPC="{{.Data.data.JSON_RPC}}"
             {{end}}
