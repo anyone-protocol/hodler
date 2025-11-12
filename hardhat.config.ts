@@ -24,7 +24,8 @@ const config = {
       gas: "auto", 
       gasPrice: "auto", 
       gasMultiplier: 10,
-      gasLimit: 1_000_000_000_000_000_000
+      gasLimit: 1_000_000_000_000_000_000,
+      timeout: 600000 // 10 minutes
     },
     localhost: {
       timeout: 18000000

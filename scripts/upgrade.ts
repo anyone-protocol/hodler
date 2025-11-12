@@ -29,11 +29,15 @@ async function main() {
   const upgraderPrivateKey = process.env.HODLER_UPGRADER_KEY || '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d' // HH #1
   const [ owner ] = await ethers.getSigners()
 
+  console.log(`Connecting to JSON RPC: ${process.env.JSON_RPC}...`)
+  const provider = new ethers.JsonRpcProvider(
+    process.env.JSON_RPC,
+    undefined,
+    { staticNetwork: true, batchMaxCount: 1 }
+  )
+
   const upgrader = upgraderPrivateKey
-    ? new ethers.Wallet(
-        upgraderPrivateKey,
-        new ethers.JsonRpcProvider(process.env.JSON_RPC)
-      )
+    ? new ethers.Wallet(upgraderPrivateKey, provider)
     : owner
   
   console.log(`Upgrading with upgrader address ${upgrader.address}...`)
@@ -41,12 +45,15 @@ async function main() {
   // Get the current implementation factory first
   const HodlerFactory = await ethers.getContractFactory('Hodler', upgrader)
   console.log('Importing existing proxy (V1) to manifest...')
-  await upgrades.forceImport(proxyAddress, HodlerFactory)
+  await upgrades.forceImport(proxyAddress, HodlerFactory, { kind: 'uups' })
   
   // Now prepare the new implementation
   const HodlerV3Factory = await ethers.getContractFactory('HodlerV3', upgrader)
   console.log('Performing upgrade to V3...')
-  const upgradedProxy = await upgrades.upgradeProxy(proxyAddress, HodlerV3Factory)
+  const upgradedProxy = await upgrades.upgradeProxy(proxyAddress, HodlerV3Factory, {
+    kind: 'uups',
+    timeout: 0 // Disable timeout for upgrade transaction
+  })
   await upgradedProxy.waitForDeployment()
   
   const upgradedAddress = await upgradedProxy.getAddress()
