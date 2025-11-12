@@ -58,19 +58,6 @@ async function main() {
     throw new Error(`Expected version 3, but got version ${version}`)
   }
 
-  if (process.env.PHASE !== undefined && consul !== undefined) {
-    const consulKey = process.env.HODLER_CONSUL_KEY || 'hodler-sepolia/test-upgrade'
-
-    const updateResult = await consul.kv.set({
-      key: consulKey,
-      value: upgradedAddress,
-      token: consulToken
-    })
-    console.log(`Cluster variable updated: ${updateResult}`)
-  } else {
-    console.warn('Deployment env var PHASE not defined, skipping update of cluster variable in Consul.')
-  }
-
   console.log('Upgrade completed successfully!')
 }
 

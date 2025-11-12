@@ -17,10 +17,10 @@ job "hodler-scripting-stage" {
 
         config {
             network_mode = "host"
-            image = "ghcr.io/anyone-protocol/hodler:0.1.8"
+            image = "ghcr.io/anyone-protocol/hodler:0.3.2"
             entrypoint = ["npx"]
             command = "hardhat"
-            args = ["run", "--network", "sepolia", "scripts/lockSize.ts"]
+            args = ["run", "--network", "sepolia", "scripts/checkVersion.ts"]
         }
 
         vault {
