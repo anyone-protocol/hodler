@@ -38,12 +38,14 @@ async function main() {
   
   console.log(`Upgrading with upgrader address ${upgrader.address}...`)
   
-  const HodlerV3Factory = await ethers.getContractFactory('HodlerV3', upgrader)
-
-  console.log('Importing existing proxy to manifest...')
-  await upgrades.forceImport(proxyAddress, HodlerV3Factory)
+  // Get the current implementation factory first
+  const HodlerFactory = await ethers.getContractFactory('Hodler', upgrader)
+  console.log('Importing existing proxy (V1) to manifest...')
+  await upgrades.forceImport(proxyAddress, HodlerFactory)
   
-  console.log('Performing upgrade...')
+  // Now prepare the new implementation
+  const HodlerV3Factory = await ethers.getContractFactory('HodlerV3', upgrader)
+  console.log('Performing upgrade to V3...')
   const upgradedProxy = await upgrades.upgradeProxy(proxyAddress, HodlerV3Factory)
   await upgradedProxy.waitForDeployment()
   
