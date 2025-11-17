@@ -3,7 +3,7 @@ import { ethers, upgrades } from "hardhat";
 import { Contract } from "ethers";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
-describe("HodlerV3 Edge Cases", function () {
+describe("HodlerV5 Edge Cases", function () {
   let hodler: Contract;
   let token: Contract;
   let owner: SignerWithAddress;
@@ -31,8 +31,8 @@ describe("HodlerV3 Edge Cases", function () {
     const Token = await ethers.getContractFactory("Token");
     token = await Token.deploy(100_000_000n * BigInt(1e18));
     
-    const HodlerV3 = await ethers.getContractFactory("HodlerV3");
-    hodler = await upgrades.deployProxy(HodlerV3, [
+    const HodlerV5 = await ethers.getContractFactory("HodlerV5");
+    hodler = await upgrades.deployProxy(HodlerV5, [
       await token.getAddress(),
       controller.address,
       INITIAL_LOCK_SIZE,

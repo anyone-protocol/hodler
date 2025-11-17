@@ -3,7 +3,7 @@ import { ethers, upgrades } from "hardhat";
 import { Contract, Signer } from "ethers";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
-describe("HodlerV3 Initialization Tests", function () {
+describe("HodlerV5 Initialization Tests", function () {
   let hodler: Contract;
   let token: Contract;
   let owner: SignerWithAddress;
@@ -29,8 +29,8 @@ describe("HodlerV3 Initialization Tests", function () {
     const Token = await ethers.getContractFactory("Token");
     token = await Token.deploy(100_000_000n * BigInt(1e18));
 
-    const HodlerV3 = await ethers.getContractFactory("HodlerV3");
-    hodler = await upgrades.deployProxy(HodlerV3, [
+    const HodlerV5 = await ethers.getContractFactory("HodlerV5");
+    hodler = await upgrades.deployProxy(HodlerV5, [
       await token.getAddress(),
       controller.address,
       LOCK_SIZE,
@@ -58,9 +58,9 @@ describe("HodlerV3 Initialization Tests", function () {
     });
 
     it("Should fail initialization with zero lock size", async function () {
-      const HodlerV3 = await ethers.getContractFactory("HodlerV3");
+      const HodlerV5 = await ethers.getContractFactory("HodlerV5");
       await expect(
-        upgrades.deployProxy(HodlerV3, [
+        upgrades.deployProxy(HodlerV5, [
           await token.getAddress(),
           controller.address,
           0, // zero lock size
@@ -75,9 +75,9 @@ describe("HodlerV3 Initialization Tests", function () {
     });
 
     it("Should fail initialization with zero min stake size", async function () {
-      const HodlerV3 = await ethers.getContractFactory("HodlerV3");
+      const HodlerV5 = await ethers.getContractFactory("HodlerV5");
       await expect(
-        upgrades.deployProxy(HodlerV3, [
+        upgrades.deployProxy(HodlerV5, [
           await token.getAddress(),
           controller.address,
           LOCK_SIZE,
@@ -92,12 +92,12 @@ describe("HodlerV3 Initialization Tests", function () {
     });
 
     it("Should fail initialization with invalid durations", async function () {
-      const HodlerV3 = await ethers.getContractFactory("HodlerV3");
+      const HodlerV5 = await ethers.getContractFactory("HodlerV5");
       const invalidDuration = TIMESTAMP_BUFFER; // Too short duration
 
       // Test invalid lock duration
       await expect(
-        upgrades.deployProxy(HodlerV3, [
+        upgrades.deployProxy(HodlerV5, [
           await token.getAddress(),
           controller.address,
           LOCK_SIZE,
@@ -112,7 +112,7 @@ describe("HodlerV3 Initialization Tests", function () {
 
       // Test invalid stake duration
       await expect(
-        upgrades.deployProxy(HodlerV3, [
+        upgrades.deployProxy(HodlerV5, [
           await token.getAddress(),
           controller.address,
           LOCK_SIZE,
@@ -127,7 +127,7 @@ describe("HodlerV3 Initialization Tests", function () {
 
       // Test invalid governance duration
       await expect(
-        upgrades.deployProxy(HodlerV3, [
+        upgrades.deployProxy(HodlerV5, [
           await token.getAddress(),
           controller.address,
           LOCK_SIZE,

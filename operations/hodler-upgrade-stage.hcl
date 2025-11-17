@@ -17,7 +17,7 @@ job "hodler-stage" {
 
         config {
             network_mode = "host"
-            image = "ghcr.io/anyone-protocol/hodler:0.3.4"
+            image = "ghcr.io/anyone-protocol/hodler:0.5.0"
             entrypoint = ["npx"]
             command = "hardhat"
             args = ["run", "--network", "sepolia", "scripts/upgrade.ts"]

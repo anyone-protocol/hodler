@@ -4,7 +4,7 @@ import { Contract, Signer } from "ethers";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 import exp from "constants";
 
-describe("HodlerV3 Vault Management", function () {
+describe("HodlerV5 Vault Management", function () {
   let hodler: Contract;
   let token: Contract;
   let owner: Signer;
@@ -30,8 +30,8 @@ describe("HodlerV3 Vault Management", function () {
     const Token = await ethers.getContractFactory("Token");
     token = await Token.deploy(100_000_000n * BigInt(1e18));
     
-    const HodlerV3 = await ethers.getContractFactory("HodlerV3");
-    hodler = await upgrades.deployProxy(HodlerV3, [
+    const HodlerV5 = await ethers.getContractFactory("HodlerV5");
+    hodler = await upgrades.deployProxy(HodlerV5, [
       await token.getAddress(),
       await controller.getAddress(),
       LOCK_SIZE,

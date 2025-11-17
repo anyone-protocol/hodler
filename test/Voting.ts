@@ -4,7 +4,7 @@ import { Contract, Signer } from "ethers";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 
-describe("HodlerV3 Voting Tests", function () {
+describe("HodlerV5 Voting Tests", function () {
   let hodler: Contract;
   let token: Contract;
   let owner: SignerWithAddress;
@@ -29,9 +29,9 @@ describe("HodlerV3 Voting Tests", function () {
     const Token = await ethers.getContractFactory("Token");
     token = await Token.deploy(100_000_000n * BigInt(1e18))
     
-    // Deploy HodlerV3 contract
-    const HodlerV3 = await ethers.getContractFactory("HodlerV3");
-    hodler = await upgrades.deployProxy(HodlerV3, [
+    // Deploy HodlerV5 contract
+    const HodlerV5 = await ethers.getContractFactory("HodlerV5");
+    hodler = await upgrades.deployProxy(HodlerV5, [
       await token.getAddress(),
       controller.address,
       LOCK_SIZE,
@@ -230,6 +230,168 @@ describe("HodlerV3 Voting Tests", function () {
         hodler.connect(user).stake(operator.address, stake3)
       ).to.emit(hodler, "AddedVotes")
         .withArgs(user.address, stake3);
+    });
+
+    describe("votesOf Tests", function () {
+      it("Should return 0 for a non-voter", async function () {
+        const votes = await hodler.votesOf(user.address);
+        expect(votes).to.equal(0);
+      });
+
+      it("Should return 0 for a voter with no stakes", async function () {
+        // @ts-ignore
+        await hodler.connect(user).becomeVoter();
+        
+        const votes = await hodler.votesOf(user.address);
+        expect(votes).to.equal(0);
+      });
+
+      it("Should return correct votes when user becomes voter with existing stakes", async function () {
+        const stakeAmount = ethers.parseEther("100");
+        
+        // Stake before becoming voter
+        // @ts-ignore
+        await hodler.connect(user).stake(operator.address, stakeAmount);
+        
+        // Votes should be 0 before becoming voter
+        let votes = await hodler.votesOf(user.address);
+        expect(votes).to.equal(0);
+        
+        // Become voter
+        // @ts-ignore
+        await hodler.connect(user).becomeVoter();
+        
+        // Votes should equal stake amount
+        votes = await hodler.votesOf(user.address);
+        expect(votes).to.equal(stakeAmount);
+      });
+
+      it("Should return correct votes when voter stakes", async function () {
+        const stakeAmount = ethers.parseEther("150");
+        
+        // Become voter first
+        // @ts-ignore
+        await hodler.connect(user).becomeVoter();
+        
+        // Stake after becoming voter
+        // @ts-ignore
+        await hodler.connect(user).stake(operator.address, stakeAmount);
+        
+        const votes = await hodler.votesOf(user.address);
+        expect(votes).to.equal(stakeAmount);
+      });
+
+      it("Should return correct votes after voter unstakes", async function () {
+        const stakeAmount = ethers.parseEther("200");
+        const unstakeAmount = ethers.parseEther("75");
+        
+        // Stake and become voter
+        // @ts-ignore
+        await hodler.connect(user).stake(operator.address, stakeAmount);
+        // @ts-ignore
+        await hodler.connect(user).becomeVoter();
+        
+        // Check initial votes
+        let votes = await hodler.votesOf(user.address);
+        expect(votes).to.equal(stakeAmount);
+        
+        // Unstake
+        // @ts-ignore
+        await hodler.connect(user).unstake(operator.address, unstakeAmount);
+        
+        // Votes should be reduced
+        votes = await hodler.votesOf(user.address);
+        expect(votes).to.equal(stakeAmount - unstakeAmount);
+      });
+
+      it("Should return correct votes with multiple stakes to different operators", async function () {
+        const stake1 = ethers.parseEther("100");
+        const stake2 = ethers.parseEther("50");
+        const stake3 = ethers.parseEther("25");
+        
+        // Stake to multiple operators
+        // @ts-ignore
+        await hodler.connect(user).stake(operator.address, stake1);
+        // @ts-ignore
+        await hodler.connect(user).stake(user2.address, stake2);
+        
+        // Become voter
+        // @ts-ignore
+        await hodler.connect(user).becomeVoter();
+        
+        // Check votes equal sum of all stakes
+        let votes = await hodler.votesOf(user.address);
+        expect(votes).to.equal(stake1 + stake2);
+        
+        // Add more stake
+        // @ts-ignore
+        await hodler.connect(user).stake(operator.address, stake3);
+        
+        // Votes should include new stake
+        votes = await hodler.votesOf(user.address);
+        expect(votes).to.equal(stake1 + stake2 + stake3);
+      });
+
+      it("Should return correct votes after partial unstake from one operator", async function () {
+        const stake1 = ethers.parseEther("100");
+        const stake2 = ethers.parseEther("80");
+        const unstakeAmount = ethers.parseEther("30");
+        
+        // Stake to multiple operators and become voter
+        // @ts-ignore
+        await hodler.connect(user).stake(operator.address, stake1);
+        // @ts-ignore
+        await hodler.connect(user).stake(user2.address, stake2);
+        // @ts-ignore
+        await hodler.connect(user).becomeVoter();
+        
+        // Check initial votes
+        let votes = await hodler.votesOf(user.address);
+        expect(votes).to.equal(stake1 + stake2);
+        
+        // Unstake from one operator
+        // @ts-ignore
+        await hodler.connect(user).unstake(operator.address, unstakeAmount);
+        
+        // Votes should be reduced by unstaked amount
+        votes = await hodler.votesOf(user.address);
+        expect(votes).to.equal(stake1 + stake2 - unstakeAmount);
+      });
+
+      it("Should return 0 votes for non-voter even with stakes", async function () {
+        const stakeAmount = ethers.parseEther("100");
+        
+        // Stake without becoming voter
+        // @ts-ignore
+        await hodler.connect(user).stake(operator.address, stakeAmount);
+        
+        // Votes should remain 0
+        const votes = await hodler.votesOf(user.address);
+        expect(votes).to.equal(0);
+      });
+
+      it("Should return independent vote counts for different voters", async function () {
+        const userStake = ethers.parseEther("100");
+        const user2Stake = ethers.parseEther("200");
+        
+        // Both users stake and become voters
+        // @ts-ignore
+        await hodler.connect(user).stake(operator.address, userStake);
+        // @ts-ignore
+        await hodler.connect(user).becomeVoter();
+        
+        // @ts-ignore
+        await hodler.connect(user2).stake(operator.address, user2Stake);
+        // @ts-ignore
+        await hodler.connect(user2).becomeVoter();
+        
+        // Check each user has independent vote count
+        const userVotes = await hodler.votesOf(user.address);
+        const user2Votes = await hodler.votesOf(user2.address);
+        
+        expect(userVotes).to.equal(userStake);
+        expect(user2Votes).to.equal(user2Stake);
+      });
     });
   });
 });
