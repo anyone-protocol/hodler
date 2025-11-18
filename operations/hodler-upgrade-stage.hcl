@@ -17,7 +17,7 @@ job "hodler-stage" {
 
         config {
             network_mode = "host"
-            image = "ghcr.io/anyone-protocol/hodler:0.5.0"
+            image = "ghcr.io/anyone-protocol/hodler:0.5.1"
             entrypoint = ["npx"]
             command = "hardhat"
             args = ["run", "--network", "sepolia", "scripts/upgrade.ts"]
@@ -46,6 +46,8 @@ job "hodler-stage" {
             CONSUL_IP="127.0.0.1"
             CONSUL_PORT="8500"
             HODLER_CONSUL_KEY="hodler/sepolia/stage/address"
+            HODLER_OLD_FACTORY_NAME="HodlerV3"
+            HODLER_NEW_FACTORY_NAME="HodlerV5"
         }
 
         restart {

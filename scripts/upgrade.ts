@@ -5,6 +5,10 @@ import Consul from 'consul'
 async function main() {
   let consul
   const consulToken = process.env.CONSUL_TOKEN || undefined
+  const oldFactoryName = process.env.HODLER_OLD_FACTORY_NAME || 'HodlerV3'
+  const newFactoryName = process.env.HODLER_NEW_FACTORY_NAME || 'HodlerV5'
+  const newVersion = parseInt(newFactoryName.split('V')[1]) || 1
+  
   let proxyAddress = process.env.HODLER_PROXY_ADDRESS
 
   if (process.env.PHASE !== undefined && process.env.CONSUL_IP !== undefined) {
@@ -43,14 +47,14 @@ async function main() {
   console.log(`Upgrading with upgrader address ${upgrader.address}...`)
   
   // Get the current implementation factory first
-  const HodlerFactory = await ethers.getContractFactory('Hodler', upgrader)
-  console.log('Importing existing proxy (V1) to manifest...')
-  await upgrades.forceImport(proxyAddress, HodlerFactory, { kind: 'uups' })
+  const OldHodlerFactory = await ethers.getContractFactory(oldFactoryName, upgrader)
+  console.log(`Importing existing proxy ${oldFactoryName} to manifest...`)
+  await upgrades.forceImport(proxyAddress, OldHodlerFactory, { kind: 'uups' })
   
   // Now prepare the new implementation
-  const HodlerV3Factory = await ethers.getContractFactory('HodlerV3', upgrader)
-  console.log('Performing upgrade to V3...')
-  const upgradedProxy = await upgrades.upgradeProxy(proxyAddress, HodlerV3Factory, {
+  const NewHodlerFactory = await ethers.getContractFactory(newFactoryName, upgrader)
+  console.log(`Performing upgrade to ${newFactoryName}...`)
+  const upgradedProxy = await upgrades.upgradeProxy(proxyAddress, NewHodlerFactory, {
     kind: 'uups',
     timeout: 0 // Disable timeout for upgrade transaction
   })
@@ -63,8 +67,8 @@ async function main() {
   const version = await upgradedProxy.version()
   console.log(`New contract version: ${version}`)
   
-  if (version !== 3) {
-    throw new Error(`Expected version 3, but got version ${version}`)
+  if (version !== newVersion) {
+    throw new Error(`Expected version ${newFactoryName}, but got version ${version}`)
   }
 
   console.log('Upgrade completed successfully!')
