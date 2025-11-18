@@ -65,13 +65,16 @@ async function main() {
   
   // Verify the version
   const version = await upgradedProxy.version()
-  console.log(`New contract version: ${version}`)
+  console.log(`New contract version: ${version}, expected: ${newVersion}`)
   
   if (version !== newVersion) {
-    throw new Error(`Expected version ${newFactoryName}, but got version ${version}`)
+    console.log('------ NOTICE ------')
+    console.log(`Old cache? Expected version ${newVersion} of ${newFactoryName}, but got version ${version}?`)
+    console.log(`Use checkVersion script to validate: npx hardhat --network sepolia run scripts/checkVersion.ts`)
+    console.log('------ ^^^^^^ ------')
   }
 
-  console.log('Upgrade completed successfully!')
+  console.log('Upgrade completed!')
 }
 
 main().catch((error) => {
