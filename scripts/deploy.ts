@@ -40,7 +40,7 @@ async function main() {
   
   console.log(`Deploying HodlerV3 with deployer ${deployer.address}...`)
   
-  const Contract = await ethers.getContractFactory('HodlerV3', deployer)
+  const Contract = await ethers.getContractFactory('HodlerV5', deployer)
 
   const lockSize = '100'
   const lockDuration = 60 * 60 * 24 * 30 // 30 days
