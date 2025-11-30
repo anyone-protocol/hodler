@@ -20,7 +20,7 @@ job "hodler-scripting-live" {
             image = "ghcr.io/anyone-protocol/hodler:0.3.4"
             entrypoint = ["npx"]
             command = "hardhat"
-            args = ["run", "--network", "sepolia", "scripts/lockSize.ts"]
+            args = ["run", "--network", "ethereum", "scripts/lockSize.ts"]
         }
 
         vault {
@@ -45,7 +45,7 @@ job "hodler-scripting-live" {
             PHASE="live"
             CONSUL_IP="127.0.0.1"
             CONSUL_PORT="8500"
-            HODLER_CONSUL_KEY="hodler/sepolia/live/address"
+            HODLER_CONSUL_KEY="hodler/ethereum/live/address"
         }
 
         restart {

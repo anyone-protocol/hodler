@@ -29,6 +29,15 @@ const config = {
     },
     localhost: {
       timeout: 18000000
+    },
+    ethereum: {
+      url: "https://mainnet.infura.io/v3/cfed69d3b4fd4630b1957335cdb517cb",
+      accounts: [],
+      gas: "auto", 
+      gasPrice: "auto", 
+      gasMultiplier: 10,
+      gasLimit: 1_000_000_000_000_000_000,
+      timeout: 600000 // 10 minutes
     }
   },
 };

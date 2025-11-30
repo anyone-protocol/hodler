@@ -26,7 +26,7 @@ async function main() {
 
   console.log(`Checking version of Hodler proxy at ${proxyAddress}...`)
 
-  const hodler = await ethers.getContractAt('HodlerV3', proxyAddress)
+  const hodler = await ethers.getContractAt('HodlerV5', proxyAddress)
   
   const version = await hodler.version()
   console.log(`Current contract version: ${version}`)

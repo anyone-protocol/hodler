@@ -1,4 +1,4 @@
-job "hodler-live" {
+job "hodler-transfer-admin-live" {
     datacenters = ["ator-fin"]
     type = "batch"
     namespace = "live-protocol"
@@ -12,19 +12,19 @@ job "hodler-live" {
         attempts = 0
     }
 
-    task "deploy-hodler-live-task" {
+    task "hodler-live" {
         driver = "docker"
 
         config {
             network_mode = "host"
-            image = "ghcr.io/anyone-protocol/hodler:0.1.8"
+            image = "ghcr.io/anyone-protocol/hodler:0.5.2"
             entrypoint = ["npx"]
             command = "hardhat"
-            args = ["run", "--network", "ethereum", "scripts/deploy.ts"]
+            args = ["run", "--network", "ethereum", "scripts/transferAdmin.ts"]
         }
 
         vault {
-            role = "any1-nomad-workloads-controller"
+            role = "any1-nomad-workloads-owner"
         }
 
         consul {}
@@ -35,8 +35,6 @@ job "hodler-live" {
                 HODLER_DEPLOYER_KEY="{{.Data.data.HODLER_DEPLOYER_KEY}}"
                 CONSUL_TOKEN="{{.Data.data.CONSUL_TOKEN}}"
                 JSON_RPC="{{.Data.data.JSON_RPC}}"
-                HODLER_OPERATOR_ADDRESS="{{.Data.data.HODLER_OPERATOR_ADDRESS}}"
-                REWARDS_POOL_ADDRESS="{{.Data.data.REWARDS_POOL_ADDRESS}}"
             {{end}}
             EOH
             destination = "secrets/file.env"
@@ -48,7 +46,7 @@ job "hodler-live" {
             CONSUL_IP="127.0.0.1"
             CONSUL_PORT="8500"
             HODLER_CONSUL_KEY="hodler/ethereum/live/address"
-            ATOR_TOKEN_CONSUL_KEY="ator-token/ethereum/live/address"
+            NEW_ADMIN_ADDRESS="..."
         }
 
         restart {
