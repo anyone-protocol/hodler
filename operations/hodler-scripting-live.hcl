@@ -17,7 +17,7 @@ job "hodler-scripting-live" {
 
         config {
             network_mode = "host"
-            image = "ghcr.io/anyone-protocol/hodler:0.3.4"
+            image = "ghcr.io/anyone-protocol/hodler:0.5.8"
             entrypoint = ["npx"]
             command = "hardhat"
             args = ["run", "--network", "ethereum", "scripts/lockSize.ts"]
