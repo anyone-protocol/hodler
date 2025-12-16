@@ -1,5 +1,5 @@
 # BUILD
-FROM node:18.17-alpine As build
+FROM node:22.20-alpine As build
 
 WORKDIR /usr/src/app
 
