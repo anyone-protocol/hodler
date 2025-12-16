@@ -25,7 +25,9 @@ async function main() {
   const deployerPrivateKey = process.env.HODLER_DEPLOYER_KEY || '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d' // HH #1
   const [ owner ] = await ethers.getSigners()
 
-  const provider = new ethers.JsonRpcProvider(process.env.JSON_RPC, undefined, {
+  const jsonRpc = process.env.JSON_RPC
+  console.log(`JSON_RPC: ${jsonRpc}`)
+  const provider = new ethers.JsonRpcProvider(jsonRpc, undefined, {
     polling: true,
     pollingInterval: 30000, // 30 seconds between polls
     staticNetwork: true
@@ -60,7 +62,16 @@ async function main() {
       governanceDuration, 
       rewardsPoolAddress,
       ethers.parseEther(defaultRedeemCost)
-    ]
+    ],
+    {
+      timeout: 600000, // 10 minutes
+      pollingInterval: 30000, // 30 seconds
+      txOverrides: {
+        gasLimit: 10000000,
+        maxFeePerGas: ethers.parseUnits('1', 'gwei'), // Current gas ~0.03 gwei
+        maxPriorityFeePerGas: ethers.parseUnits('0.1', 'gwei')
+      }
+    }
   )
 
   console.log(`Waiting for proxy deployment...`)

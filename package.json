@@ -1,6 +1,6 @@
 {
   "name": "hodler",
-  "version": "0.5.6",
+  "version": "0.5.7",
   "description": "EVM based interface for Hodlers of ANyONe Protocol",
   "main": "index.js",
   "scripts": {
