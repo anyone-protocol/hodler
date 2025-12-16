@@ -17,7 +17,7 @@ job "hodler-transfer-admin-live" {
 
         config {
             network_mode = "host"
-            image = "ghcr.io/anyone-protocol/hodler:0.5.2"
+            image = "ghcr.io/anyone-protocol/hodler:0.5.8"
             entrypoint = ["npx"]
             command = "hardhat"
             args = ["run", "--network", "ethereum", "scripts/transferAdmin.ts"]
@@ -46,7 +46,7 @@ job "hodler-transfer-admin-live" {
             CONSUL_IP="127.0.0.1"
             CONSUL_PORT="8500"
             HODLER_CONSUL_KEY="hodler/ethereum/live/address"
-            NEW_ADMIN_ADDRESS="..."
+            NEW_ADMIN_ADDRESS="0x9f0B3499686B76C505e809c6f565eBD530b4020d"
         }
 
         restart {

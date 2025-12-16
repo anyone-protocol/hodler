@@ -38,10 +38,12 @@ async function main() {
   const deployerPrivateKey = process.env.HODLER_DEPLOYER_KEY || '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d' // HH #1
   const [ owner ] = await ethers.getSigners()
 
+  const jsonRpc = process.env.JSON_RPC
+  console.log(`Using JSON RPC: ${jsonRpc}`)
   const deployer = deployerPrivateKey
     ? new ethers.Wallet(
         deployerPrivateKey,
-        new ethers.JsonRpcProvider(process.env.JSON_RPC)
+        new ethers.JsonRpcProvider(jsonRpc)
       )
     : owner
   
