@@ -17,7 +17,7 @@ job "hodler-live" {
 
         config {
             network_mode = "host"
-            image = "ghcr.io/anyone-protocol/hodler:0.5.3"
+            image = "ghcr.io/anyone-protocol/hodler:0.5.4"
             entrypoint = ["npx"]
             command = "hardhat"
             args = ["run", "--network", "ethereum", "scripts/deploy.ts"]
