@@ -63,7 +63,7 @@ describe("HodlerV5 Access Control Tests", function () {
       await hodler.connect(pauser).pause();
       // @ts-ignore
       await expect(hodler.connect(unauthorized).emergencyWithdraw())
-        .to.be.revertedWith("AccessControl: account 0x15d34aaf54267db7d7c367839aaf71a00a2c6a65 is missing role 0x0000000000000000000000000000000000000000000000000000000000000000");
+        .to.be.revertedWithCustomError(hodler, "AccessControlUnauthorizedAccount");
     });
   });
 
@@ -85,7 +85,7 @@ describe("HodlerV5 Access Control Tests", function () {
     it("should prevent unauthorized accounts from pausing", async function () {
       // @ts-ignore
       await expect(hodler.connect(unauthorized).pause())
-        .to.be.revertedWith("AccessControl: account 0x15d34aaf54267db7d7c367839aaf71a00a2c6a65 is missing role 0x65d7a28e3265b37a6474929f336521b332c1681b933f6cb9f3376673440d862a");
+        .to.be.revertedWithCustomError(hodler, "AccessControlUnauthorizedAccount");
     });
   });
 
@@ -129,7 +129,7 @@ describe("HodlerV5 Access Control Tests", function () {
       const newLockSize = ethers.parseEther("200");
       // @ts-ignore
       await expect(hodler.connect(unauthorized).setLockSize(newLockSize))
-        .to.be.revertedWith(/AccessControl/);
+        .to.be.revertedWithCustomError(hodler, "AccessControlUnauthorizedAccount");
     });
   });
 
@@ -137,24 +137,24 @@ describe("HodlerV5 Access Control Tests", function () {
     it("should prevent unauthorized access to restricted functions", async function () {
       // @ts-ignore
       await expect(hodler.connect(unauthorized).emergencyWithdraw())
-        .to.be.revertedWith(/AccessControl/);
+        .to.be.revertedWithCustomError(hodler, "AccessControlUnauthorizedAccount");
 
       // @ts-ignore
       await expect(hodler.connect(unauthorized).pause())
-        .to.be.revertedWith(/AccessControl/);
+        .to.be.revertedWithCustomError(hodler, "AccessControlUnauthorizedAccount");
 
       // @ts-ignore
       await expect(hodler.connect(unauthorized).setLockSize(LOCK_SIZE))
-        .to.be.revertedWith(/AccessControl/);
+        .to.be.revertedWithCustomError(hodler, "AccessControlUnauthorizedAccount");
 
       // @ts-ignore
       await expect(hodler.connect(unauthorized).setLockDuration(LOCK_DURATION))
-        .to.be.revertedWith(/AccessControl/);
+        .to.be.revertedWithCustomError(hodler, "AccessControlUnauthorizedAccount");
 
       const PAUSER_ROLE = await hodler.PAUSER_ROLE();
       // @ts-ignore
       await expect(hodler.connect(unauthorized).grantRole(PAUSER_ROLE, unauthorized.address))
-        .to.be.revertedWith(/AccessControl/);
+        .to.be.revertedWithCustomError(hodler, "AccessControlUnauthorizedAccount");
     });
   });
 });

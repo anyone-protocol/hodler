@@ -166,7 +166,7 @@ describe("HodlerV5 Initialization Tests", function () {
           rewardsPool.address,
           DEFAULT_REDEEM_COST
         )
-      ).to.be.revertedWith("Initializable: contract is already initialized");
+      ).to.be.revertedWithCustomError(hodler, "InvalidInitialization");
     });
   });
 });

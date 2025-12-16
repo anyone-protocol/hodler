@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.22;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
@@ -27,7 +26,6 @@ contract Hodler is
     ReentrancyGuardUpgradeable
 {
     using Strings for address;
-    using SafeMath for uint256;
     using SafeCast for uint256;
     using EnumerableMap for EnumerableMap.AddressToUintMap;
     
@@ -129,7 +127,7 @@ contract Hodler is
         require(fingerprintLength <= 40, "Fingerprint must have 40 or less characters");
         
         if (hodlers[_msgSender()].available >= LOCK_SIZE) {
-            hodlers[_msgSender()].available = hodlers[_msgSender()].available.sub(LOCK_SIZE);
+            hodlers[_msgSender()].available = hodlers[_msgSender()].available - LOCK_SIZE;
         } else {
             require(tokenContract.transferFrom(_msgSender(), address(this), LOCK_SIZE), 
                     "Transfer of tokens for the lock failed");
@@ -156,7 +154,7 @@ contract Hodler is
         for (uint i = 0; i < hodlers[_msgSender()].locks.length; i++) {
             if (keccak256(bytes(hodlers[_msgSender()].locks[i].fingerprint)) == bytesFingerprint
                 && hodlers[_msgSender()].locks[i].operator == _operator) {
-                lockAmount = lockAmount.add(hodlers[_msgSender()].locks[i].amount);
+                lockAmount = lockAmount + hodlers[_msgSender()].locks[i].amount;
                 lockData = hodlers[_msgSender()].locks[i].fingerprint;
             } else {
                 if (safeIndex != i) {
@@ -173,7 +171,7 @@ contract Hodler is
         }
         emit Unlocked(_msgSender(), fingerprint, lockAmount, _operator);
 
-        uint64 availableAt = block.timestamp.add(LOCK_DURATION).toUint64();
+        uint64 availableAt = (block.timestamp + LOCK_DURATION).toUint64();
         hodlers[_msgSender()].vaults.push(VaultData(lockAmount, availableAt, 1, lockData));
         emit Vaulted(_msgSender(), lockAmount, availableAt);
     }
@@ -181,7 +179,7 @@ contract Hodler is
     function stake(address _address, uint256 _amount) external whenNotPaused nonReentrant {
         require(_amount > 0, "Insuficient amount for staking");
         if (hodlers[_msgSender()].available >= _amount) {
-            hodlers[_msgSender()].available = hodlers[_msgSender()].available.sub(_amount);
+            hodlers[_msgSender()].available = hodlers[_msgSender()].available - _amount;
         } else {
             if (hodlers[_msgSender()].isSet == false) {
                 hodlerKeys.push(_msgSender());
@@ -196,7 +194,7 @@ contract Hodler is
         uint index = 0;
         while (foundStake == false && index < hodlers[_msgSender()].stakes.length) {
             if (hodlers[_msgSender()].stakes[index].operator == _address) {
-                hodlers[_msgSender()].stakes[index].amount = hodlers[_msgSender()].stakes[index].amount.add(_amount);
+                hodlers[_msgSender()].stakes[index].amount = hodlers[_msgSender()].stakes[index].amount + _amount;
                 foundStake = true;
             } else {
                 index++;
@@ -218,7 +216,7 @@ contract Hodler is
             if (hodlers[_msgSender()].stakes[i].operator == _address) {
                 require(hodlers[_msgSender()].stakes[i].amount >= _amount, "Insufficient stake");
                 uint256 oldStake = hodlers[_msgSender()].stakes[i].amount;
-                hodlers[_msgSender()].stakes[i].amount = hodlers[_msgSender()].stakes[i].amount.sub(_amount);
+                hodlers[_msgSender()].stakes[i].amount = hodlers[_msgSender()].stakes[i].amount - _amount;
                 stakeData = hodlers[_msgSender()].stakes[i].operator;
                 didUnstake = true;
                 if (oldStake > _amount) {
@@ -239,14 +237,14 @@ contract Hodler is
         }
 
         emit Unstaked(_msgSender(), _address, _amount);
-        uint64 availableAt = block.timestamp.add(STAKE_DURATION).toUint64();
+        uint64 availableAt = (block.timestamp + STAKE_DURATION).toUint64();
         hodlers[_msgSender()].vaults.push(VaultData(_amount, availableAt, 2, stakeData.toHexString()));
         emit Vaulted(_msgSender(), _amount, availableAt);
     }
 
     function addVotes(uint256 _amount) external whenNotPaused nonReentrant {
         if (hodlers[_msgSender()].available >= _amount) {
-            hodlers[_msgSender()].available = hodlers[_msgSender()].available.sub(_amount);
+            hodlers[_msgSender()].available = hodlers[_msgSender()].available - _amount;
         } else {
             if (hodlers[_msgSender()].isSet == false) {
                 hodlerKeys.push(_msgSender());
@@ -255,16 +253,16 @@ contract Hodler is
             require(tokenContract.transferFrom(_msgSender(), address(this), _amount), 
                     "Transfer of tokens for voting failed");
         }
-        hodlers[_msgSender()].votes = hodlers[_msgSender()].votes.add(_amount);
+        hodlers[_msgSender()].votes = hodlers[_msgSender()].votes + _amount;
         emit AddedVotes(_msgSender(), _amount);
     }
 
     function removeVotes(uint256 _amount) external whenNotPaused nonReentrant {
         require(hodlers[_msgSender()].votes >= _amount, "Insufficient votes");
-        hodlers[_msgSender()].votes = hodlers[_msgSender()].votes.sub(_amount);
+        hodlers[_msgSender()].votes = hodlers[_msgSender()].votes - _amount;
         emit RemovedVotes(_msgSender(), _amount);
 
-        uint64 availableAt = block.timestamp.add(GOVERNANCE_DURATION).toUint64();
+        uint64 availableAt = (block.timestamp + GOVERNANCE_DURATION).toUint64();
         hodlers[_msgSender()].vaults.push(VaultData(_amount, availableAt, 3, ''));
 
         emit Vaulted(_msgSender(), _amount, availableAt);
@@ -279,11 +277,11 @@ contract Hodler is
         }
 
         require(
-            hodlers[_msgSender()].gas.add(msg.value) > DEFAULT_REDEEM_COST,
+            hodlers[_msgSender()].gas + msg.value > DEFAULT_REDEEM_COST,
             "Not enough gas budget for updating the hodler account"
         );
 
-        hodlers[_msgSender()].gas = hodlers[_msgSender()].gas.add(msg.value);
+        hodlers[_msgSender()].gas = hodlers[_msgSender()].gas + msg.value;
         
         emit UpdateRewards(_msgSender(), DEFAULT_REDEEM_COST, false);
                 
@@ -303,12 +301,12 @@ contract Hodler is
     }
 
     function openExpired() external whenNotPaused nonReentrant {
-        uint64 bufferedTimestamp = block.timestamp.sub(TIMESTAMP_BUFFER).toUint64();
+        uint64 bufferedTimestamp = (block.timestamp - TIMESTAMP_BUFFER).toUint64();
         uint256 safeIndex = 0;
         uint256 claimed = 0;
         for (uint256 i = 0; i < hodlers[_msgSender()].vaults.length; i++) {
             if (hodlers[_msgSender()].vaults[i].availableAt < bufferedTimestamp) {
-                claimed = claimed.add(hodlers[_msgSender()].vaults[i].amount);
+                claimed = claimed + hodlers[_msgSender()].vaults[i].amount;
             } else {
                 if (safeIndex != i) {
                     hodlers[_msgSender()].vaults[safeIndex] = hodlers[_msgSender()].vaults[i];
@@ -321,7 +319,7 @@ contract Hodler is
             hodlers[_msgSender()].vaults.pop();
         }
 
-        hodlers[_msgSender()].available = hodlers[_msgSender()].available.add(claimed);
+        hodlers[_msgSender()].available = hodlers[_msgSender()].available + claimed;
     }
 
     function withdraw(uint256 _amount) external whenNotPaused nonReentrant {
@@ -330,7 +328,7 @@ contract Hodler is
             hodlers[_msgSender()].available >= _amount,
             "Insufficient available balance"
         );
-        hodlers[_msgSender()].available = hodlers[_msgSender()].available.sub(_amount);
+        hodlers[_msgSender()].available = hodlers[_msgSender()].available - _amount;
         tokenContract.transfer(_msgSender(), _amount);
 
         emit Withdrawn(_msgSender(), _amount);
@@ -348,11 +346,11 @@ contract Hodler is
         bool _redeem
     ) external onlyRole(CONTROLLER_ROLE) whenNotPaused nonReentrant {
         require(hodlers[_address].gas >= _gasEstimate, "Insufficient gas budget for hodler account");
-        hodlers[_address].gas = hodlers[_address].gas.sub(_gasEstimate);
+        hodlers[_address].gas = hodlers[_address].gas - _gasEstimate;
 
-        uint256 relayRewardAmount = _relayRewardAllocation.sub(hodlers[_address].claimedRelayRewards);
-        uint256 stakingRewardAmount = _stakingRewardAllocation.sub(hodlers[_address].claimedStakingRewards);
-        uint256 rewardAmount = relayRewardAmount.add(stakingRewardAmount);
+        uint256 relayRewardAmount = _relayRewardAllocation - hodlers[_address].claimedRelayRewards;
+        uint256 stakingRewardAmount = _stakingRewardAllocation - hodlers[_address].claimedStakingRewards;
+        uint256 rewardAmount = relayRewardAmount + stakingRewardAmount;
         require(rewardAmount > 0, "No rewards to claim");
         
         hodlers[_address].claimedRelayRewards = _relayRewardAllocation;
@@ -362,7 +360,7 @@ contract Hodler is
             require(tokenContract.transferFrom(rewardsPoolAddress, _address, rewardAmount), "Withdrawal of reward tokens failed");
         } else {
             require(tokenContract.transferFrom(rewardsPoolAddress, address(this), rewardAmount), "Transfer of reward tokens failed");
-            hodlers[_address].available = hodlers[_address].available.add(rewardAmount);
+            hodlers[_address].available = hodlers[_address].available + rewardAmount;
         }
         emit Rewarded(_address, rewardAmount, _redeem, relayRewardAmount, stakingRewardAmount);
     }
@@ -378,7 +376,7 @@ contract Hodler is
             if (keccak256(bytes(hodlers[_msgSender()].locks[i].fingerprint)) == bytesFingerprint
                 && hodlers[_msgSender()].locks[i].operator == _operator) {
                 
-                lockAmount = lockAmount.add(hodlers[_msgSender()].locks[i].amount);
+                lockAmount = lockAmount + hodlers[_msgSender()].locks[i].amount;
             }
         }
 
@@ -389,7 +387,7 @@ contract Hodler is
         uint256 stakeAmount = 0;
         for (uint i = 0; i < hodlers[_msgSender()].stakes.length; i++) {
             if (hodlers[_msgSender()].stakes[i].operator == _address) {
-                stakeAmount = stakeAmount.add(hodlers[_msgSender()].stakes[i].amount);
+                stakeAmount = stakeAmount + hodlers[_msgSender()].stakes[i].amount;
             }
         }
         return stakeAmount;

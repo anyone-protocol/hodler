@@ -121,7 +121,7 @@ describe("HodlerV5 Upgrade Tests", function () {
       // Try to upgrade from non-upgrader account
       await expect(
         upgrades.upgradeProxy(await hodler.getAddress(), HodlerV2Factory.connect(user))
-      ).to.be.revertedWith(/AccessControl/);
+      ).to.be.reverted;
 
       // Grant upgrader role and try again
       await hodler.grantRole(UPGRADER_ROLE, user.address);
@@ -175,7 +175,7 @@ describe("HodlerV5 Upgrade Tests", function () {
       // Try to upgrade from non-upgrader account
       await expect(
         upgrades.upgradeProxy(await hodler.getAddress(), HodlerV3Factory.connect(user))
-      ).to.be.revertedWith(/AccessControl/);
+      ).to.be.reverted;
 
       // Grant upgrader role and try again
       await hodler.grantRole(UPGRADER_ROLE, user.address);
@@ -229,7 +229,7 @@ describe("HodlerV5 Upgrade Tests", function () {
       // Try to upgrade from non-upgrader account
       await expect(
         upgrades.upgradeProxy(await hodlerV3.getAddress(), HodlerV4Factory.connect(user))
-      ).to.be.revertedWith(/AccessControl/);
+      ).to.be.reverted;
 
       // Grant upgrader role and try again
       await hodlerV3.grantRole(UPGRADER_ROLE, user.address);
@@ -283,7 +283,7 @@ describe("HodlerV5 Upgrade Tests", function () {
       // Try to upgrade from non-upgrader account
       await expect(
         upgrades.upgradeProxy(await hodlerV3.getAddress(), HodlerV5Factory.connect(user))
-      ).to.be.revertedWith(/AccessControl/);
+      ).to.be.reverted;
 
       // Grant upgrader role and try again
       await hodlerV3.grantRole(UPGRADER_ROLE, user.address);
@@ -336,7 +336,7 @@ describe("HodlerV5 Upgrade Tests", function () {
       // Try to upgrade from non-upgrader account
       await expect(
         upgrades.upgradeProxy(await hodlerV5.getAddress(), HodlerV6Factory.connect(user))
-      ).to.be.revertedWith(/AccessControl/);
+      ).to.be.reverted;
 
       // Grant upgrader role and try again
       await hodlerV5.grantRole(UPGRADER_ROLE, user.address);

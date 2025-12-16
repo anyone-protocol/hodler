@@ -80,17 +80,17 @@ describe("HodlerV5 Contract Pause Tests", function () {
       await expect(
         // @ts-ignore
         hodler.connect(user).lock("testFingerprint", user.address)
-      ).to.be.revertedWith("Pausable: paused");
+      ).to.be.revertedWithCustomError(hodler, "EnforcedPause");
 
       await expect(
         // @ts-ignore
         hodler.connect(user).stake(controller.address, LOCK_SIZE)
-      ).to.be.revertedWith("Pausable: paused");
+      ).to.be.revertedWithCustomError(hodler, "EnforcedPause");
 
       await expect(
         // @ts-ignore
         hodler.connect(user).becomeVoter()
-      ).to.be.revertedWith("Pausable: paused");
+      ).to.be.revertedWithCustomError(hodler, "EnforcedPause");
     });
 
     it("Should allow emergency withdrawal when paused", async function () {

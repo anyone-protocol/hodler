@@ -82,7 +82,7 @@ describe("HodlerV5 Edge Cases", function () {
       await expect(
         // @ts-ignore
         hodler.connect(users[0]).stake(users[1].address, balance + 1n)
-      ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+      ).to.be.revertedWithCustomError(token, "ERC20InsufficientBalance");
     });
   });
 });

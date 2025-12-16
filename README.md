@@ -44,8 +44,6 @@ The Hodler contract is a core component of the ANyONe Protocol that manages toke
 - `unlock(string fingerprint)`: Unlock tokens to a time-locked vault
 - `stake(address operator, uint256 amount)`: Stake tokens with an operator
 - `unstake(address operator)`: Unstake tokens to a time-locked vault
-- `addVotes(uint256 amount)`: Lock tokens for governance
-- `removeVotes(uint256 amount)`: Remove tokens from governance into a time-locked vault
 
 ### Vault Management
 - `openExpired()`: Claim tokens from expired vaults
@@ -76,7 +74,6 @@ The Hodler contract is a core component of the ANyONe Protocol that manages toke
 
 - `Locked/Unlocked`: Token locking operations
 - `Staked/Unstaked`: Staking operations
-- `AddedVotes/RemovedVotes`: Governance operations
 - `Vaulted`: Time-locked vault creation
 - `UpdateRewards/Rewarded`: Reward distribution
 - `Withdrawn`: Token withdrawals

@@ -126,17 +126,17 @@ describe("HodlerV5 Duration Management", function () {
       await expect(
         // @ts-ignore
         hodler.connect(addr1).setLockDuration(newDuration)
-      ).to.be.revertedWith(/AccessControl/);
+      ).to.be.revertedWithCustomError(hodler, "AccessControlUnauthorizedAccount");
 
       await expect(
         // @ts-ignore
         hodler.connect(addr1).setStakeDuration(newDuration)
-      ).to.be.revertedWith(/AccessControl/);
+      ).to.be.revertedWithCustomError(hodler, "AccessControlUnauthorizedAccount");
 
       await expect(
         // @ts-ignore
         hodler.connect(addr1).setGovernanceDuration(newDuration)
-      ).to.be.revertedWith(/AccessControl/);
+      ).to.be.revertedWithCustomError(hodler, "AccessControlUnauthorizedAccount");
     });
   });
 });

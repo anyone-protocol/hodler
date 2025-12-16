@@ -5,7 +5,7 @@ import "@nomicfoundation/hardhat-chai-matchers";
 /** @type import('hardhat/config').HardhatUserConfig */
 const config = {
   solidity: {
-    version: "0.8.19",
+    version: "0.8.22",
     settings: {
       optimizer: {
         enabled: true,
