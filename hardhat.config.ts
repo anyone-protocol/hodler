@@ -9,7 +9,7 @@ const config = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 5
+        runs: 1000
       },
     },
   },
